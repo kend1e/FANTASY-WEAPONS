@@ -6,10 +6,11 @@ pluginManagement {
             url = 'https://maven.minecraftforge.net/'
         }
         maven {
-			name = 'Fabric'
-			url = 'https://maven.fabricmc.net/'
-		}
-		mavenCentral()
+            name = 'Fabric'
+            url = 'https://maven.fabricmc.net/'
+        }
+        mavenCentral()
+        maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
         maven { url = 'https://maven.parchmentmc.org' }
     }
 }
@@ -18,21 +19,21 @@ plugins {
     id 'org.gradle.toolchains.foojay-resolver-convention' version '0.8.0'
 }
 
-include(':appFabric:1.14.4')
-include(':appFabric:1.15.2')
-include(':appFabric:1.16.5')
-include(':appFabric:1.17.1')
-include(':appFabric:1.18.2')
-include(':appFabric:1.19.2')
-include(':appFabric:1.20.1')
+// ── Shared pure-Java module (config, constants, resources) ──
+include(':appCommon')
+
+// ── Legacy 1.20.1 modules (disabled) ──
+// include(':appFabric:1.20.1')
+// include(':appForge:1.20.1')
+
+// ── Fabric ──
 include(':appFabric:1.21.1')
-include(':appForge:1.14.4')
-include(':appForge:1.15.2')
-include(':appForge:1.16.5')
-include(':appForge:1.17.1')
-include(':appForge:1.18.2')
-include(':appForge:1.19.2')
-include(':appForge:1.20.1')
-include(':appForge:1.21.1')
-include(':appNeoForge:1.20.4')
+include(':appFabric:1.21.4')
+include(':appFabric:1.21.10')
+include(':appFabric:1.21.11')
+
+// ── NeoForge ──
 include(':appNeoForge:1.21.1')
+include(':appNeoForge:1.21.4')
+include(':appNeoForge:1.21.10')
+include(':appNeoForge:1.21.11')
