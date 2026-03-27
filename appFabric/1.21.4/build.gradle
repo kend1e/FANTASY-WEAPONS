@@ -1,0 +1,75 @@
+plugins {
+    id 'fabric-loom' version '1.13.6'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
+    id 'maven-publish'
+}
+
+version = project.mod_version
+group = project.maven_group
+
+base {
+    archivesName = project.archives_base_name
+}
+
+configurations {
+    shadow
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    mappings loom.officialMojangMappings()
+
+    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+
+    implementation project(':appCommon')
+    shadow "de.exlll:configlib-yaml:4.5.0"
+    implementation "de.exlll:configlib-yaml:4.5.0"
+}
+
+processResources {
+    from project(':appCommon').sourceSets.main.resources
+    inputs.property "version", project.version
+
+    filesMatching("fabric.mod.json") {
+        expand "version": project.version
+    }
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+}
+
+tasks.withType(JavaCompile).configureEach {
+    it.options.release = 21
+}
+
+java {
+    withSourcesJar()
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+shadowJar {
+    configurations = [project.configurations.shadow]
+    archiveClassifier = 'dev-shadow'
+    relocate("de.exlll", "net.kenddie.exlll")
+    relocate("org.snakeyaml", "net.kenddie.snakeyaml")
+}
+
+remapJar {
+    inputFile.set shadowJar.archiveFile
+    dependsOn shadowJar
+}
+
+jar {
+    from(project(':appCommon').sourceSets.main.output.classesDirs)
+    from("LICENSE") {
+        rename { "${it}_${project.base.archivesName.get()}" }
+    }
+}
+
+sourcesJar {
+    from project(':appCommon').sourceSets.main.allSource
+}
