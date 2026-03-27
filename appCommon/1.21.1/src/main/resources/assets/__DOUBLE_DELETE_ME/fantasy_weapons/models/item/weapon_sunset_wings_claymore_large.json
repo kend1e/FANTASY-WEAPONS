@@ -1,0 +1,6 @@
+{
+	"parent": "fantasy_weapons:item/handheld_large_3x",
+	"textures": {
+		"layer0": "fantasy_weapons:item/weapon_sunset_wings_claymore_large"
+	}
+}

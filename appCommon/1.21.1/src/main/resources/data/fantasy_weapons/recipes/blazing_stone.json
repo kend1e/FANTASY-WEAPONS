@@ -1,0 +1,14 @@
+{
+    "type": "minecraft:crafting_shaped",
+    "pattern": [
+        "Y#Y",
+        "#X#",
+        "Y#Y"
+    ],
+    "key": {
+        "#": { "item": "minecraft:blaze_powder" },
+        "Y": { "item": "minecraft:glowstone_dust" },
+        "X": { "item": "minecraft:stone" }
+    },
+    "result": { "item": "fantasy_weapons:blazing_stone", "count": 2 }
+}
