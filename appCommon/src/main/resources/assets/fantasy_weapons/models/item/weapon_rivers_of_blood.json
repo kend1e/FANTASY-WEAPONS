@@ -1,0 +1,6 @@
+{
+	"parent": "item/handheld",
+	"textures": {
+		"layer0": "fantasy_weapons:item/weapon_rivers_of_blood"
+	}
+}

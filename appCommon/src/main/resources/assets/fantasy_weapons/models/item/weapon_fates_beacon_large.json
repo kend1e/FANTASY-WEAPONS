@@ -1,0 +1,6 @@
+{
+	"parent": "fantasy_weapons:item/handheld_large_2x",
+	"textures": {
+		"layer0": "fantasy_weapons:item/weapon_fates_beacon_large"
+	}
+}
