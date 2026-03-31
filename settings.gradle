@@ -22,9 +22,9 @@ plugins {
 // ── Shared pure-Java module (config, constants, resources) ──
 include(':appCommon')
 
-// ── Legacy 1.20.1 modules (disabled) ──
-// include(':appFabric:1.20.1')
-// include(':appForge:1.20.1')
+// ── Legacy 1.20.1 modules ──
+include(':appFabric:1.20.1')
+include(':appForge:1.20.1')
 
 // ── Fabric ──
 include(':appFabric:1.21.1')
