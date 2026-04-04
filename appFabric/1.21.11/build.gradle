@@ -39,6 +39,19 @@ processResources {
         expand "version": project.version
     }
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
+
+    // MC 1.21.2+ changed ingredient format from {"item":"..."} to plain strings
+    doLast {
+        fileTree(destinationDir) {
+            include 'data/fantasy_weapons/recipe/*.json'
+        }.each { file ->
+            def text = file.text
+            def transformed = text.replaceAll(/\{\s*"item"\s*:\s*"([^"]+)"\s*\}/, '"$1"')
+            if (transformed != text) {
+                file.text = transformed
+            }
+        }
+    }
 }
 
 tasks.withType(JavaCompile).configureEach {

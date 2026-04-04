@@ -1,7 +1,9 @@
 package net.kenddie.fantasyweapons.fabric;
 
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.model.loading.v1.ExtraModelKey;
 import net.fabricmc.fabric.api.client.model.loading.v1.ModelLoadingPlugin;
+import net.fabricmc.fabric.api.client.model.loading.v1.SimpleUnbakedExtraModel;
 import net.kenddie.fantasyweapons.FantasyWeapons;
 import net.kenddie.fantasyweapons.fabric.model.EpicBakedModel;
 import net.minecraft.client.renderer.item.BlockModelWrapper;
@@ -29,6 +31,10 @@ public class FantasyWeaponsClientFabric implements ClientModInitializer {
                         var smallResourceLocation = Identifier.fromNamespaceAndPath(FantasyWeapons.MOD_ID, itemName);
                         var largeResourceLocation = Identifier.fromNamespaceAndPath(FantasyWeapons.MOD_ID, "item/" + itemName + "_large");
                         itemToLargeModel.put(smallResourceLocation, largeResourceLocation);
+                        pluginContext.addModel(
+                                ExtraModelKey.create(largeResourceLocation::toString),
+                                SimpleUnbakedExtraModel.blockStateModel(largeResourceLocation)
+                        );
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
