@@ -17,6 +17,25 @@ java {
     withSourcesJar()
 }
 
+// Extract configlib classes into the mod's module for dev runs.
+// NeoForge 21.1 uses JPMS module layers that prevent external library JARs
+// on the bootstrap classpath from being visible to the mod layer.
+// By extracting the classes into the source set output, they become part of
+// the mod's own module and are visible without cross-layer reads.
+def configlibDevClasses = layout.buildDirectory.dir("configlib-devonly")
+configurations {
+    shadow
+    configlibExtract {
+        extendsFrom shadow
+    }
+}
+tasks.register('extractConfiglib', Sync) {
+    from { configurations.configlibExtract.collect { zipTree(it) } }
+    into configlibDevClasses
+    exclude 'META-INF/**'
+}
+sourceSets.main.output.dir(configlibDevClasses, builtBy: 'extractConfiglib')
+
 neoForge {
     version = project.neo_version
 
@@ -38,17 +57,13 @@ neoForge {
     }
 }
 
-configurations {
-    shadow
-}
-
 repositories {
     mavenCentral()
 }
 
 dependencies {
     implementation project(':appCommon')
-    implementation "de.exlll:configlib-yaml:4.5.0"
+    compileOnly "de.exlll:configlib-yaml:4.5.0"
     shadow "de.exlll:configlib-yaml:4.5.0"
 }
 
@@ -77,6 +92,9 @@ jar {
     from("LICENSE") {
         rename { "${it}_${project.base.archivesName.get()}" }
     }
+    // Exclude extracted configlib classes (dev-only; distribution uses shadowJar)
+    exclude 'de/exlll/**'
+    exclude 'org/snakeyaml/**'
 }
 
 sourcesJar {
