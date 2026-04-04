@@ -44,16 +44,9 @@ This document provides an exhaustive breakdown of all API changes between NeoFor
 
 ### Weapon Class Inheritance
 
-#### 1.21.1: SwordItem Extension
+**1.21.1:**
 ```java
-package net.kenddie.fantasyweapons.item;
-
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.SwordItem;
-import net.minecraft.world.item.Tier;
-
 public class FWWeaponBasicSwordItem extends SwordItem {
-
     private final float attackDamage;
 
     public FWWeaponBasicSwordItem(Tier tier, float damage, float speed, Item.Properties properties) {
@@ -61,28 +54,13 @@ public class FWWeaponBasicSwordItem extends SwordItem {
         this.attackDamage = damage;
     }
 
-    public float getDamage() {
-        return attackDamage;
-    }
+    public float getDamage() { return attackDamage; }
 }
 ```
 
-**Key characteristics in 1.21.1:**
-- Extends `SwordItem` directly
-- Uses `Tier` interface (e.g., `Tiers.NETHERITE`)
-- Calls `SwordItem.createAttributes()` static method
-- Applies attributes via `properties.attributes()`
-- Inherits all SwordItem behavior (sweeping, enchantments, etc.)
-
-#### 1.21.10: Item Extension with ToolMaterial
+**1.21.10:**
 ```java
-package net.kenddie.fantasyweapons.item;
-
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ToolMaterial;
-
 public class FWWeaponBasicSwordItem extends Item {
-
     private final float attackDamage;
 
     public FWWeaponBasicSwordItem(ToolMaterial material, float damage, float speed, Item.Properties properties) {
@@ -90,86 +68,13 @@ public class FWWeaponBasicSwordItem extends Item {
         this.attackDamage = damage;
     }
 
-    public float getDamage() {
-        return attackDamage;
-    }
+    public float getDamage() { return attackDamage; }
 }
-```
-
-**Key characteristics in 1.21.10:**
-- Extends `Item` directly (not SwordItem)
-- Uses `ToolMaterial` class (e.g., `ToolMaterial.NETHERITE`)
-- Calls `material.applySwordProperties()` instance method
-- Material method returns modified properties directly
-- Must manually implement sword behaviors if needed
-
-### Why This Change Matters
-
-In 1.21.10, Mojang restructured how tool/weapon attributes work:
-
-1. **Decoupled from class hierarchy**: Sword behavior is now data-driven, not class-driven
-2. **More flexible**: Any Item can have sword-like properties
-3. **Cleaner API**: Material handles all attribute application
-
-### Import Changes
-
-```java
-// 1.21.1 imports
-import net.minecraft.world.item.SwordItem;
-import net.minecraft.world.item.Tier;
-import net.minecraft.world.item.Tiers;
-
-// 1.21.10 imports
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ToolMaterial;
-// Note: ToolMaterial.NETHERITE replaces Tiers.NETHERITE
 ```
 
 ---
 
 ## Tool Material System Changes
-
-### Tier vs ToolMaterial
-
-#### 1.21.1: Tier Interface
-```java
-public interface Tier {
-    int getUses();                           // Durability
-    float getSpeed();                        // Mining speed
-    float getAttackDamageBonus();           // Base damage bonus
-    int getLevel();                          // Harvest level
-    int getEnchantmentValue();              // Enchantability
-    Ingredient getRepairIngredient();       // Repair material
-}
-
-// Usage
-Tiers.NETHERITE   // Enum implementing Tier
-Tiers.DIAMOND
-Tiers.IRON
-```
-
-#### 1.21.10: ToolMaterial Class
-```java
-public final class ToolMaterial {
-    // Built-in materials
-    public static final ToolMaterial NETHERITE = ...;
-    public static final ToolMaterial DIAMOND = ...;
-    public static final ToolMaterial IRON = ...;
-    
-    // Methods
-    public Item.Properties applySwordProperties(Item.Properties props, float damage, float speed);
-    public Item.Properties applyAxeProperties(Item.Properties props, float damage, float speed);
-    public Item.Properties applyPickaxeProperties(Item.Properties props, float damage, float speed);
-    // ... etc
-}
-
-// Usage
-ToolMaterial.NETHERITE
-ToolMaterial.DIAMOND
-ToolMaterial.IRON
-```
-
-### Migration Pattern
 
 ```java
 // 1.21.1
@@ -179,28 +84,7 @@ new FWWeaponBasicSwordItem(Tiers.NETHERITE, damage, speed, props);
 new FWWeaponBasicSwordItem(ToolMaterial.NETHERITE, damage, speed, props);
 ```
 
-### Internal Changes
-
-In 1.21.1:
-```java
-// SwordItem.createAttributes was:
-public static ItemAttributeModifiers createAttributes(Tier tier, int damage, float speed) {
-    return ItemAttributeModifiers.builder()
-        .add(Attributes.ATTACK_DAMAGE, 
-             new AttributeModifier(BASE_ATTACK_DAMAGE_UUID, "Weapon", 
-                 (double)damage + tier.getAttackDamageBonus(), Operation.ADD_VALUE),
-             EquipmentSlotGroup.MAINHAND)
-        .add(Attributes.ATTACK_SPEED,
-             new AttributeModifier(BASE_ATTACK_SPEED_UUID, "Weapon",
-                 (double)speed, Operation.ADD_VALUE),
-             EquipmentSlotGroup.MAINHAND)
-        .build();
-}
-```
-
-In 1.21.10:
-```java
-// ToolMaterial.applySwordProperties is:
+`ToolMaterial.applySwordProperties()` internally sets durability, attributes, enchantability, and repair ingredients:
 public Item.Properties applySwordProperties(Item.Properties props, float damage, float speed) {
     return props
         .durability(this.durability)
@@ -214,11 +98,7 @@ public Item.Properties applySwordProperties(Item.Properties props, float damage,
 
 ## Model System Changes
 
-### Complete Model API Overhaul
-
-The model system underwent the most significant changes. In 1.21.1, items used `BakedModel`. In 1.21.10, items use the new `ItemModel` interface.
-
-### BakedModel vs ItemModel
+### BakedModel (1.21.1) vs ItemModel (1.21.10)
 
 #### 1.21.1: BakedModel Interface
 ```java
@@ -252,9 +132,9 @@ public interface ItemModel {
 }
 ```
 
-### EpicBakedModel Comparison
+### EpicBakedModel
 
-#### 1.21.1 Version
+**1.21.1** (implements `BakedModel` — 10+ methods):
 ```java
 package net.kenddie.fantasyweapons.neoforge.model;
 
@@ -329,9 +209,8 @@ public record EpicBakedModel(BakedModel smallBakedModel, BakedModel largeBakedMo
 }
 ```
 
-#### 1.21.10 Version
+**1.21.10** (implements `ItemModel` — 1 method):
 ```java
-package net.kenddie.fantasyweapons.neoforge.model;
 
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.item.ItemModel;
@@ -358,19 +237,11 @@ public record EpicBakedModel(ItemModel smallItemModel, ItemModel largeItemModel)
 }
 ```
 
-**Key differences:**
-- 1.21.1: 10 methods to implement (mostly delegation)
-- 1.21.10: 1 method to implement (update)
-- 1.21.1: Transform selection in `applyTransform`
-- 1.21.10: Transform selection in `update`
-
 ---
 
 ## Registration System Changes
 
-### Model Registration Events
-
-#### 1.21.1: RegisterAdditional Event
+### 1.21.1: RegisterAdditional + ModifyBakingResult
 ```java
 package net.kenddie.fantasyweapons.neoforge;
 
@@ -410,7 +281,7 @@ public class FantasyWeaponsClientNeoForge {
 }
 ```
 
-#### 1.21.10: RegisterStandalone Event
+### 1.21.10: RegisterStandalone + ModifyBakingResult
 ```java
 package net.kenddie.fantasyweapons.neoforge;
 
@@ -470,15 +341,15 @@ public class FantasyWeaponsClientNeoForge {
 | Event | `ModelEvent.RegisterAdditional` | `ModelEvent.RegisterStandalone` |
 | Storage | `ModelResourceLocation` | `StandaloneModelKey<ItemModel>` |
 | Registration | `event.register(modelRL)` | `event.register(key, unbakedModel)` |
-| Model Type | Automatically baked | Must provide baking function |
+
 
 ---
 
 ## Client Event System Changes
 
-### ModifyBakingResult Event
+### ModifyBakingResult
 
-#### 1.21.1 Version
+**1.21.1:**
 ```java
 @SubscribeEvent
 public void onModifyBakingResult(ModelEvent.ModifyBakingResult event) {
@@ -501,7 +372,7 @@ public void onModifyBakingResult(ModelEvent.ModifyBakingResult event) {
 }
 ```
 
-#### 1.21.10 Version
+**1.21.10:**
 ```java
 @SubscribeEvent
 public void onModifyBakingResult(ModelEvent.ModifyBakingResult event) {
@@ -534,25 +405,7 @@ public void onModifyBakingResult(ModelEvent.ModifyBakingResult event) {
 
 ---
 
-## Resource Location Changes
-
-### ModelResourceLocation Deprecation
-
-In 1.21.1, item models were identified by `ModelResourceLocation`:
-```java
-var modelRL = new ModelResourceLocation(itemRL, "inventory");
-```
-
-In 1.21.10, item models use plain `ResourceLocation`:
-```java
-var modelRL = ResourceLocation.fromNamespaceAndPath(MOD_ID, itemName);
-```
-
-The "inventory" variant is no longer needed for item models.
-
----
-
-## Complete Migration Guide
+## Migration Guide
 
 ### Step-by-Step Migration
 
@@ -600,7 +453,7 @@ Replace the model registration logic with the 1.21.10 version (see above).
 
 ---
 
-## Code Comparison Tables
+## Quick Reference Tables
 
 ### Import Statements
 
@@ -631,13 +484,4 @@ Replace the model registration logic with the 1.21.10 version (see above).
 
 ---
 
-## Summary
-
-The migration from NeoForge 1.21.1 to 1.21.10 requires significant changes:
-
-1. **Weapon class**: Change from `SwordItem` to `Item` with `ToolMaterial`
-2. **Model system**: Complete rewrite to use `ItemModel` instead of `BakedModel`
-3. **Registration**: New `StandaloneModelKey` system for custom models
-4. **Events**: Same event names but different APIs
-
-The changes reflect Mojang's effort to make the item/model system more flexible and data-driven, but require careful attention during porting.
+The migration requires significant model-related rewrites, but the new `ItemModel` API is much simpler (1 method vs 10+).

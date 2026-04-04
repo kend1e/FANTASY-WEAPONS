@@ -1,25 +1,22 @@
 # Fabric API Changes: 1.21.1 to 1.21.10
 
-This document provides an exhaustive breakdown of all API changes between Fabric for Minecraft 1.21.1 and Fabric for Minecraft 1.21.10 as they affect the Fantasy Weapons mod. Understanding these changes is essential for porting mods between these versions.
+All API changes between Fabric 1.21.1 and 1.21.10 that affect Fantasy Weapons.
 
 ---
 
 ## Table of Contents
 
-1. [Executive Summary](#executive-summary)
+1. [Summary](#summary)
 2. [Item System Changes](#item-system-changes)
 3. [Tool Material System Changes](#tool-material-system-changes)
 4. [Model Loading Plugin Changes](#model-loading-plugin-changes)
 5. [Baked Model Changes](#baked-model-changes)
-6. [Registration System Changes](#registration-system-changes)
-7. [Complete Migration Guide](#complete-migration-guide)
-8. [Code Comparison Tables](#code-comparison-tables)
+6. [Migration Guide](#migration-guide)
+7. [Quick Reference Tables](#quick-reference-tables)
 
 ---
 
-## Executive Summary
-
-### Major Breaking Changes
+## Summary
 
 | Category | 1.21.1 | 1.21.10 |
 |----------|--------|---------|
@@ -31,12 +28,11 @@ This document provides an exhaustive breakdown of all API changes between Fabric
 | Model Wrapper | `EpicBakedModel implements BakedModel` | `EpicBakedModel implements ItemModel` |
 | Render Context | `RenderContext.itemTransformationMode()` | `ItemDisplayContext` parameter |
 
-### Impact Assessment
-
-- **FWWeaponBasicSwordItem.java**: Complete rewrite required
+Files affected:
+- **FWWeaponBasicSwordItem.java**: Complete rewrite (`SwordItem` → `Item`)
 - **FWItems.java**: Minor changes (material type)
-- **FantasyWeaponsClientFabric.java**: Major rewrite required
-- **EpicBakedModel.java**: Complete rewrite required (different interface)
+- **FantasyWeaponsClientFabric.java**: Major rewrite (new plugin API)
+- **EpicBakedModel.java**: Complete rewrite (`BakedModel` → `ItemModel`)
 
 ---
 
@@ -44,16 +40,9 @@ This document provides an exhaustive breakdown of all API changes between Fabric
 
 ### Weapon Class Inheritance
 
-#### 1.21.1: SwordItem Extension
+**1.21.1:**
 ```java
-package net.kenddie.fantasyweapons.item;
-
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.SwordItem;
-import net.minecraft.world.item.Tier;
-
 public class FWWeaponBasicSwordItem extends SwordItem {
-
     private final float attackDamage;
 
     public FWWeaponBasicSwordItem(Tier tier, float damage, float speed, Item.Properties properties) {
@@ -61,28 +50,13 @@ public class FWWeaponBasicSwordItem extends SwordItem {
         this.attackDamage = damage;
     }
 
-    public float getDamage() {
-        return attackDamage;
-    }
+    public float getDamage() { return attackDamage; }
 }
 ```
 
-**Key characteristics in 1.21.1:**
-- Extends `SwordItem` directly
-- Uses `Tier` interface (e.g., `Tiers.NETHERITE`)
-- Calls `SwordItem.createAttributes()` static method
-- Applies attributes via `properties.attributes()`
-- Inherits all SwordItem behavior automatically
-
-#### 1.21.10: Item Extension with ToolMaterial
+**1.21.10:**
 ```java
-package net.kenddie.fantasyweapons.item;
-
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ToolMaterial;
-
 public class FWWeaponBasicSwordItem extends Item {
-
     private final float attackDamage;
 
     public FWWeaponBasicSwordItem(ToolMaterial material, float damage, float speed, Item.Properties properties) {
@@ -90,72 +64,13 @@ public class FWWeaponBasicSwordItem extends Item {
         this.attackDamage = damage;
     }
 
-    public float getDamage() {
-        return attackDamage;
-    }
+    public float getDamage() { return attackDamage; }
 }
 ```
-
-**Key characteristics in 1.21.10:**
-- Extends `Item` directly (not SwordItem)
-- Uses `ToolMaterial` class (e.g., `ToolMaterial.NETHERITE`)
-- Calls `material.applySwordProperties()` instance method
-- Material method handles all attribute application
-- Tool behavior is data-driven, not inheritance-driven
-
-### Why This Change Matters
-
-Mojang decoupled tool behavior from class hierarchy in 1.21.10:
-
-1. **Flexibility**: Any Item can have sword properties
-2. **Data-driven**: Stats come from the material, not the class
-3. **Cleaner composition**: No need to extend specific tool classes
 
 ---
 
 ## Tool Material System Changes
-
-### Tier vs ToolMaterial
-
-#### 1.21.1: Tier Interface
-```java
-public interface Tier {
-    int getUses();                           // Durability
-    float getSpeed();                        // Mining speed
-    float getAttackDamageBonus();           // Base damage bonus
-    int getLevel();                          // Harvest level
-    int getEnchantmentValue();              // Enchantability
-    Ingredient getRepairIngredient();       // Repair material
-}
-
-// Usage
-Tiers.NETHERITE   // Enum implementing Tier
-Tiers.DIAMOND
-Tiers.IRON
-Tiers.STONE
-Tiers.WOOD
-```
-
-#### 1.21.10: ToolMaterial Class
-```java
-public final class ToolMaterial {
-    // Static instances
-    public static final ToolMaterial NETHERITE = ...;
-    public static final ToolMaterial DIAMOND = ...;
-    public static final ToolMaterial IRON = ...;
-    public static final ToolMaterial STONE = ...;
-    public static final ToolMaterial WOOD = ...;
-    
-    // Instance methods
-    public Item.Properties applySwordProperties(Item.Properties props, float damage, float speed);
-    public Item.Properties applyAxeProperties(Item.Properties props, float damage, float speed);
-    public Item.Properties applyPickaxeProperties(Item.Properties props, float damage, float speed);
-    public Item.Properties applyShovelProperties(Item.Properties props, float damage, float speed);
-    public Item.Properties applyHoeProperties(Item.Properties props, float damage, float speed);
-}
-```
-
-### Migration Pattern
 
 ```java
 // 1.21.1
@@ -171,9 +86,7 @@ new FWWeaponBasicSwordItem(ToolMaterial.NETHERITE, damage, speed, props);
 
 ## Model Loading Plugin Changes
 
-### Complete Plugin API Comparison
-
-#### 1.21.1: ModelLoadingPlugin
+### 1.21.1: ModelLoadingPlugin
 ```java
 package net.kenddie.fantasyweapons.fabric;
 
@@ -233,12 +146,14 @@ public class FantasyWeaponsClientFabric implements ClientModInitializer {
 }
 ```
 
-#### 1.21.10: ModelLoadingPlugin (Updated API)
+### 1.21.10: ModelLoadingPlugin (Updated API)
 ```java
 package net.kenddie.fantasyweapons.fabric;
 
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.model.loading.v1.ExtraModelKey;
 import net.fabricmc.fabric.api.client.model.loading.v1.ModelLoadingPlugin;
+import net.fabricmc.fabric.api.client.model.loading.v1.SimpleUnbakedExtraModel;
 import net.minecraft.client.renderer.item.BlockModelWrapper;
 import net.minecraft.client.renderer.item.ItemModel;
 import net.minecraft.client.renderer.item.ModelRenderProperties;
@@ -269,7 +184,11 @@ public class FantasyWeaponsClientFabric implements ClientModInitializer {
                 }
             }
 
-            // Note: No addModels() call needed in 1.21.10
+            // Register large models with the model loader (required since 1.21.10)
+            pluginContext.addModel(
+                    ExtraModelKey.create(largeResourceLocation::toString),
+                    SimpleUnbakedExtraModel.blockStateModel(largeResourceLocation)
+            );
 
             // Use the new modifyItemModelAfterBake() instead of modifyModelAfterBake()
             pluginContext.modifyItemModelAfterBake().register((itemModel, bakeContext) -> {
@@ -298,7 +217,7 @@ public class FantasyWeaponsClientFabric implements ClientModInitializer {
 
 | Aspect | 1.21.1 | 1.21.10 |
 |--------|--------|---------|
-| Register models | `pluginContext.addModels(locations)` | Not needed / automatic |
+| Register models | `pluginContext.addModels(locations)` | `pluginContext.addModel(ExtraModelKey, SimpleUnbakedExtraModel)` |
 | Modify callback | `modifyModelAfterBake()` | `modifyItemModelAfterBake()` |
 | Model parameter | `BakedModel` | `ItemModel` |
 | Context method | `bakeContext.topLevelId()` | `bakeContext.itemId()` |
@@ -309,42 +228,9 @@ public class FantasyWeaponsClientFabric implements ClientModInitializer {
 
 ## Baked Model Changes
 
-### Interface Comparison
+1.21.1 uses `BakedModel` (10+ methods to implement). 1.21.10 uses `ItemModel` (single `update()` method with `ItemDisplayContext` as a direct parameter).
 
-#### 1.21.1: BakedModel Interface
-```java
-public interface BakedModel {
-    // Required methods
-    List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction dir, RandomSource random);
-    boolean useAmbientOcclusion();
-    boolean isGui3d();
-    boolean usesBlockLight();
-    boolean isCustomRenderer();
-    TextureAtlasSprite getParticleIcon();
-    ItemOverrides getOverrides();
-    ItemTransforms getTransforms();
-}
-```
-
-#### 1.21.10: ItemModel Interface
-```java
-public interface ItemModel {
-    // Single required method
-    void update(
-        ItemStackRenderState renderState,
-        ItemStack stack,
-        ItemModelResolver resolver,
-        ItemDisplayContext displayContext,
-        @Nullable ClientLevel level,
-        @Nullable ItemOwner owner,
-        int seed
-    );
-}
-```
-
-### EpicBakedModel Comparison
-
-#### 1.21.1 Version (Full BakedModel Implementation)
+### EpicBakedModel: 1.21.1
 ```java
 package net.kenddie.fantasyweapons.fabric.model;
 
@@ -430,7 +316,7 @@ public record EpicBakedModel(BakedModel smallBakedModel, BakedModel largeBakedMo
 }
 ```
 
-#### 1.21.10 Version (Simple ItemModel Implementation)
+### EpicBakedModel: 1.21.10
 ```java
 package net.kenddie.fantasyweapons.fabric.model;
 
@@ -460,8 +346,6 @@ public record EpicBakedModel(ItemModel smallItemModel, ItemModel largeItemModel)
 }
 ```
 
-### Key Differences
-
 | Aspect | 1.21.1 | 1.21.10 |
 |--------|--------|---------|
 | Methods to implement | 10+ | 1 |
@@ -470,45 +354,13 @@ public record EpicBakedModel(ItemModel smallItemModel, ItemModel largeItemModel)
 | Fabric Renderer | Required `isVanillaAdapter() = false` | Not applicable |
 | Model type | `BakedModel` | `ItemModel` |
 
----
-
-## Registration System Changes
-
-### Item Registration (Unchanged)
-
-The item registration pattern in Fabric remains the same:
-
-```java
-// Both 1.21.1 and 1.21.10
-Registry.register(
-    BuiltInRegistries.ITEM,
-    ResourceLocation.fromNamespaceAndPath(MOD_ID, name),
-    new FWWeaponBasicSwordItem(material, damage, speed, new Item.Properties())
-);
-```
-
-### Creative Tab Registration (Unchanged)
-
-```java
-// Both 1.21.1 and 1.21.10
-Registry.register(
-    BuiltInRegistries.CREATIVE_MODE_TAB,
-    ResourceLocation.fromNamespaceAndPath(MOD_ID, "fw_tab"),
-    FabricItemGroup.builder()
-        .title(Component.translatable("itemGroup." + MOD_ID + ".fw_tab"))
-        .icon(() -> new ItemStack(ALL_ITEMS.get(1)))
-        .displayItems((ctx, entries) -> ALL_ITEMS.forEach(item -> entries.accept(new ItemStack(item))))
-        .build()
-);
-```
+Item and creative tab registration are unchanged between 1.21.1 and 1.21.10.
 
 ---
 
-## Complete Migration Guide
+## Migration Guide
 
-### Step-by-Step Migration
-
-#### 1. Update FWWeaponBasicSwordItem.java
+### 1. Update FWWeaponBasicSwordItem.java
 
 ```diff
   package net.kenddie.fantasyweapons.item;
@@ -536,7 +388,7 @@ Registry.register(
   }
 ```
 
-#### 2. Update FWItems.java
+### 2. Update FWItems.java
 
 ```diff
   package net.kenddie.fantasyweapons.item;
@@ -550,9 +402,7 @@ Registry.register(
 +         ToolMaterial.NETHERITE, config.damage, config.speed, new Item.Properties())));
 ```
 
-#### 3. Replace EpicBakedModel.java
-
-Delete the old file and create the new version:
+### 3. Replace EpicBakedModel.java
 
 ```java
 package net.kenddie.fantasyweapons.fabric.model;
@@ -581,19 +431,16 @@ public record EpicBakedModel(ItemModel smallItemModel, ItemModel largeItemModel)
 }
 ```
 
-#### 4. Update FantasyWeaponsClientFabric.java
+### 4. Update FantasyWeaponsClientFabric.java
 
-Replace the plugin registration with the 1.21.10 version (see full code above).
-
-Key changes:
 - Remove `addModels()` call
-- Change `modifyModelAfterBake()` to `modifyItemModelAfterBake()`
-- Change `bakeContext.topLevelId()` to `bakeContext.itemId()`
-- Update model baking to use `blockModelBaker()` and `BlockModelWrapper`
+- `modifyModelAfterBake()` → `modifyItemModelAfterBake()`
+- `bakeContext.topLevelId()` → `bakeContext.itemId()`
+- Bake via `blockModelBaker()` and `BlockModelWrapper`
 
 ---
 
-## Code Comparison Tables
+## Quick Reference Tables
 
 ### Import Statements
 
@@ -625,24 +472,10 @@ Key changes:
 | Model type | `BakedModel` | `ItemModel` |
 | Context access | `bakeContext.topLevelId()` | `bakeContext.itemId()` |
 
-### Fabric-Specific Considerations
+### Fabric Renderer
 
 | Aspect | 1.21.1 | 1.21.10 |
 |--------|--------|---------|
 | Renderer API | Fabric Renderer v1 | Updated, different interface |
 | VanillaModelEncoder | Used for quad emission | Not needed |
 | isVanillaAdapter | Must return false | N/A |
-
----
-
-## Summary
-
-The migration from Fabric 1.21.1 to 1.21.10 involves:
-
-1. **Weapon class restructuring**: `SwordItem` → `Item` with `ToolMaterial`
-2. **Model interface change**: `BakedModel` → `ItemModel`
-3. **Plugin API updates**: New callbacks for item-specific model modification
-4. **Simpler model wrapper**: 1 method vs 10+ methods to implement
-5. **Direct display context**: No longer need to extract from render context
-
-The new API is cleaner and more focused, but requires rewriting all model-related code.

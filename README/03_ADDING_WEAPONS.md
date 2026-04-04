@@ -1,6 +1,6 @@
-# How to Add New Weapons to the Mod
+# How to Add New Weapons
 
-This document provides step-by-step instructions for adding new weapons to Fantasy Weapons. Since all shared code and resources live in `appCommon`, adding a weapon is straightforward and requires changes in only a few files.
+All changes are in `appCommon` — no loader-specific code changes needed.
 
 ---
 
@@ -14,7 +14,7 @@ This document provides step-by-step instructions for adding new weapons to Fanta
 6. [Step 5: Create the Recipe](#step-5-create-the-recipe)
 7. [Step 6: Add Translations](#step-6-add-translations)
 8. [Step 7: Build and Test](#step-7-build-and-test)
-9. [Complete Example: Adding "Weapon_Moonlight_Katana"](#complete-example-adding-weapon_moonlight_katana)
+9. [Complete Example](#complete-example-adding-weapon_moonlight_katana)
 10. [Troubleshooting](#troubleshooting)
 
 ---
@@ -29,12 +29,12 @@ When adding a new weapon, you need to modify/create these files in `appCommon`:
 - [ ] `src/main/resources/assets/fantasy_weapons/textures/item/weapon_xxx_large.png` - Large texture
 - [ ] `src/main/resources/assets/fantasy_weapons/models/item/weapon_xxx.json` - Regular model
 - [ ] `src/main/resources/assets/fantasy_weapons/models/item/weapon_xxx_large.json` - Large model
-- [ ] `src/main/resources/data/fantasy_weapons/recipes/weapon_xxx.json` - Crafting recipe
+- [ ] `src/main/resources/data/fantasy_weapons/recipe/weapon_xxx.json` - Crafting recipe
 - [ ] `src/main/resources/assets/fantasy_weapons/lang/en_us.json` - English name
 - [ ] `src/main/resources/assets/fantasy_weapons/lang/ru_ru.json` - Russian name (optional)
 - [ ] `src/main/resources/assets/fantasy_weapons/lang/uk_ua.json` - Ukrainian name (optional)
 
-**That's it!** No changes needed in any loader-specific code.
+No changes needed in any loader-specific code.
 
 ---
 
@@ -42,35 +42,15 @@ When adding a new weapon, you need to modify/create these files in `appCommon`:
 
 ### File: `appCommon/src/main/java/net/kenddie/fantasyweapons/FantasyWeapons.java`
 
-Add your weapon's registry name to the `WEAPON_NAMES` array:
-
 ```java
 public static final String[] WEAPON_NAMES = {
-        "weapon_fates_beacon",
-        "weapon_dragonslayer_halberd",
         // ... existing weapons ...
         "weapon_dancing_blade_of_ranah",
         "weapon_moonlight_katana"          // ← Add new weapon here
 };
 ```
 
-### Naming Convention
-
-All weapon names **MUST** follow this pattern:
-- Start with `weapon_`
-- Use lowercase letters only
-- Use underscores instead of spaces
-- Be descriptive but concise
-
-**Good names:**
-- `weapon_moonlight_katana`
-- `weapon_ancient_broadsword`
-- `weapon_dragon_fang_dagger`
-
-**Bad names:**
-- `MoonlightKatana` (no prefix, camelCase)
-- `moonlight_katana` (missing weapon_ prefix)
-- `weapon moonlight katana` (spaces not allowed)
+Naming convention: `weapon_` prefix, lowercase, underscores (e.g. `weapon_moonlight_katana`).
 
 ---
 
@@ -132,20 +112,7 @@ You need **two textures** for each weapon:
 - **Format:** PNG with transparency
 - **Use:** Appears when held in first/third person
 
-### Texture Creation Tips
-
-1. **Design the large version first** - It has more detail
-2. **Scale down for regular** - Use nearest-neighbor scaling or redraw
-3. **Maintain color consistency** - Both textures should look like the same weapon
-4. **Handle orientation** - Sword blade should point up-right in texture
-
-### Example Texture Structure
-
-```
-textures/item/
-├── weapon_moonlight_katana.png       # 16x16
-└── weapon_moonlight_katana_large.png # 32x32 or 48x48
-```
+Design the large version first and scale down for the regular texture.
 
 ---
 
@@ -235,21 +202,22 @@ If you need custom positioning, override the display settings:
 
 ## Step 5: Create the Recipe
 
-### File: `appCommon/src/main/resources/data/fantasy_weapons/recipes/weapon_moonlight_katana.json`
+### File: `appCommon/src/main/resources/data/fantasy_weapons/recipe/weapon_moonlight_katana.json`
 
-Fantasy Weapons uses **smithing transform recipes** (upgrade at smithing table):
+Recipes use **smithing transform** (netherite sword + blazing stone at smithing table):
 
 ```json
 {
   "type": "minecraft:smithing_transform",
+  "category": "equipment",
+  "template": {
+    "item": "minecraft:iron_ingot"
+  },
   "base": {
     "item": "minecraft:netherite_sword"
   },
   "addition": {
-    "item": "minecraft:nether_star"
-  },
-  "template": {
-    "item": "minecraft:netherite_upgrade_smithing_template"
+    "item": "fantasy_weapons:blazing_stone"
   },
   "result": {
     "id": "fantasy_weapons:weapon_moonlight_katana"
@@ -259,53 +227,12 @@ Fantasy Weapons uses **smithing transform recipes** (upgrade at smithing table):
 
 ### Recipe Components
 
-| Component | Purpose | Common Choices |
+| Component | Purpose | Current Pattern |
 |-----------|---------|----------------|
-| `base` | The item being upgraded | `netherite_sword`, `diamond_sword` |
-| `addition` | The upgrade material | `nether_star`, `echo_shard`, `dragon_breath` |
-| `template` | The smithing template | `netherite_upgrade_smithing_template` |
-| `result` | The output weapon | Your weapon's ID |
-
-### Alternative: Shapeless Crafting
-
-If you prefer a crafting table recipe:
-
-```json
-{
-  "type": "minecraft:crafting_shapeless",
-  "ingredients": [
-    { "item": "minecraft:netherite_sword" },
-    { "item": "minecraft:nether_star" }
-  ],
-  "result": {
-    "id": "fantasy_weapons:weapon_moonlight_katana",
-    "count": 1
-  }
-}
-```
-
-### Alternative: Shaped Crafting
-
-For a specific pattern:
-
-```json
-{
-  "type": "minecraft:crafting_shaped",
-  "pattern": [
-    " N ",
-    " N ",
-    " S "
-  ],
-  "key": {
-    "N": { "item": "minecraft:netherite_ingot" },
-    "S": { "item": "minecraft:stick" }
-  },
-  "result": {
-    "id": "fantasy_weapons:weapon_moonlight_katana",
-    "count": 1
-  }
-}
-```
+| `template` | Smithing template slot | Varies per weapon |
+| `base` | The item being upgraded | `minecraft:netherite_sword` |
+| `addition` | The upgrade material | `fantasy_weapons:blazing_stone` |
+| `result` | The output weapon | `fantasy_weapons:weapon_xxx` |
 
 ---
 
@@ -341,13 +268,7 @@ Add the weapon's display name to all language files:
 }
 ```
 
-### Translation Key Format
-
-```
-item.fantasy_weapons.{weapon_name}
-      ↑                ↑
-      mod_id           registry name from WEAPON_NAMES array
-```
+Translation key format: `item.fantasy_weapons.{weapon_name}`
 
 ---
 
@@ -431,13 +352,14 @@ Here's everything you need to add for a complete weapon:
 }
 ```
 
-### 7. `recipes/weapon_moonlight_katana.json`
+### 7. `recipe/weapon_moonlight_katana.json`
 ```json
 {
   "type": "minecraft:smithing_transform",
+  "category": "equipment",
+  "template": { "item": "minecraft:iron_ingot" },
   "base": { "item": "minecraft:netherite_sword" },
-  "addition": { "item": "minecraft:echo_shard" },
-  "template": { "item": "minecraft:netherite_upgrade_smithing_template" },
+  "addition": { "item": "fantasy_weapons:blazing_stone" },
   "result": { "id": "fantasy_weapons:weapon_moonlight_katana" }
 }
 ```

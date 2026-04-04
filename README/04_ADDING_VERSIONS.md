@@ -1,24 +1,21 @@
 # How to Add New Minecraft Versions
 
-This document provides comprehensive instructions for adding support for a new Minecraft version to Fantasy Weapons. This is typically needed when Mojang releases a new Minecraft version and you want the mod to support it.
+Adding a new Minecraft version involves copying an existing version directory, updating version numbers, fixing API changes, and registering the module in `settings.gradle`.
 
 ---
 
 ## Table of Contents
 
-1. [Overview](#overview)
-2. [Prerequisites](#prerequisites)
-3. [Step 1: Identify the Target Version](#step-1-identify-the-target-version)
-4. [Step 2: Choose a Base Version to Copy](#step-2-choose-a-base-version-to-copy)
-5. [Step 3: Create the New Version Directory](#step-3-create-the-new-version-directory)
-6. [Step 4: Update gradle.properties](#step-4-update-gradleproperties)
-7. [Step 5: Update build.gradle](#step-5-update-buildgradle)
-8. [Step 6: Update settings.gradle](#step-6-update-settingsgradle)
-9. [Step 7: Fix API Changes](#step-7-fix-api-changes)
-10. [Step 8: Test the Build](#step-8-test-the-build)
-11. [Step 9: Test In-Game](#step-9-test-in-game)
-12. [Complete Example: Adding Fabric 1.22.0](#complete-example-adding-fabric-1220)
-13. [Version-Specific Considerations](#version-specific-considerations)
+1. [Prerequisites](#prerequisites)
+2. [Step 1: Copy a Base Version](#step-1-copy-a-base-version)
+3. [Step 2: Update gradle.properties](#step-2-update-gradleproperties)
+4. [Step 3: Update build.gradle](#step-3-update-buildgradle)
+5. [Step 4: Update settings.gradle](#step-4-update-settingsgradle)
+6. [Step 5: Fix API Changes](#step-5-fix-api-changes)
+7. [Step 6: Build and Test](#step-6-build-and-test)
+8. [Complete Example: Adding Fabric 1.22.0](#complete-example-adding-fabric-1220)
+9. [Version Notes](#version-notes)
+10. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -54,83 +51,12 @@ Before starting, gather this information:
 ### For NeoForge
 
 1. **Minecraft version** (e.g., `1.22.0`)
-2. **NeoForge version** - Check [NeoForge Downloads](https://neoforged.net/)
-3. **NeoForm version** - Usually same as MC version
-4. **ModDev plugin version** (optional) - Check [NeoForge ModDev](https://github.com/neoforged/ModDevGradle)
+2. **NeoForge version** — [NeoForge Downloads](https://neoforged.net/)
+3. **NeoForm version**
 
 ---
 
-## Step 1: Identify the Target Version
-
-Determine exactly what version you're adding:
-
-```
-Minecraft Version: 1.22.0
-Loader: Fabric (or NeoForge)
-Full Directory Name: appFabric/1.22.0 (or appNeoForge/1.22.0)
-```
-
-### Version Naming Convention
-
-- Use the **exact Minecraft version** (e.g., `1.21.1`, not `1.21`)
-- Create separate directories for different loaders
-- Snapshot versions: Use the snapshot name (e.g., `24w36a`)
-
----
-
-## Step 2: Choose a Base Version to Copy
-
-Copy from the **closest existing version** to minimize API changes:
-
-| Adding | Copy From |
-|--------|-----------|
-| Fabric 1.22.0 | appFabric/1.21.11 (or latest 1.21.x) |
-| NeoForge 1.22.0 | appNeoForge/1.21.11 (or latest 1.21.x) |
-| Fabric 1.21.12 | appFabric/1.21.11 |
-| NeoForge 1.21.5 | appNeoForge/1.21.4 |
-
-**Why this matters:** Copying from a closer version means fewer API changes to fix.
-
----
-
-## Step 3: Create the New Version Directory
-
-### Copy the Directory
-
-```powershell
-# For Fabric
-Copy-Item -Recurse appFabric/1.21.11 appFabric/1.22.0
-
-# For NeoForge
-Copy-Item -Recurse appNeoForge/1.21.11 appNeoForge/1.22.0
-```
-
-### Clean the Build Directory
-
-```powershell
-# Remove old build artifacts
-Remove-Item -Recurse appFabric/1.22.0/build -ErrorAction SilentlyContinue
-Remove-Item -Recurse appFabric/1.22.0/.gradle -ErrorAction SilentlyContinue
-Remove-Item appFabric/1.22.0/*.lock -ErrorAction SilentlyContinue
-```
-
-### Directory Structure After Copy
-
-```
-appFabric/
-├── 1.21.11/           # Original
-│   ├── build.gradle
-│   ├── gradle.properties
-│   └── src/main/...
-└── 1.22.0/            # New copy
-    ├── build.gradle
-    ├── gradle.properties
-    └── src/main/...
-```
-
----
-
-## Step 4: Update gradle.properties
+## Step 2: Update gradle.properties
 
 ### File: `appFabric/1.22.0/gradle.properties` (or NeoForge equivalent)
 
@@ -211,13 +137,9 @@ curl -s https://meta.fabricmc.net/v2/versions/loader | jq '.[0].version'
 
 ---
 
-## Step 5: Update build.gradle
+## Step 3: Update build.gradle
 
-Usually you **don't need to change `build.gradle`** unless:
-
-1. Plugin versions need updating
-2. New dependencies are required
-3. API changes require build config changes
+Usually **no changes needed** unless plugin versions need updating for the new MC version.
 
 ### Potential Plugin Updates
 
@@ -243,7 +165,7 @@ Before updating plugins, verify they support your target MC version:
 
 ---
 
-## Step 6: Update settings.gradle
+## Step 4: Update settings.gradle
 
 ### File: `FANTASY-WEAPONS/settings.gradle`
 
@@ -252,6 +174,10 @@ Add your new version to the appropriate section:
 ```gradle
 // Shared pure-Java module
 include(':appCommon')
+
+// Legacy 1.20.1 modules
+include(':appFabric:1.20.1')
+include(':appForge:1.20.1')
 
 // Fabric loaders
 include(':appFabric:1.21.1')
@@ -270,167 +196,48 @@ include(':appNeoForge:1.22.0')    // ← Add new version
 
 ### Important Notes
 
-- Keep versions in ascending order for readability
+- Keep versions in ascending order
 - The module name `:appFabric:1.22.0` maps to directory `appFabric/1.22.0/`
-- Commit `settings.gradle` changes separately if needed
 
 ---
 
-## Step 7: Fix API Changes
+## Step 5: Fix API Changes
 
-This is where most of the work happens. Run a test build to see what breaks:
-
-```powershell
-./gradlew :appFabric:1.22.0:build 2>&1 | Out-File build-errors.txt
-```
-
-### Common API Changes
-
-#### Item Registration
-
-**1.21.x:**
-```java
-new Item(new Item.Properties())
-```
-
-**Potential 1.22.x change:**
-```java
-new Item(new Item.Properties().setId(resourceKey))
-```
-
-#### Resource Locations
-
-**1.21.1:**
-```java
-ResourceLocation.fromNamespaceAndPath("mod_id", "path")
-```
-
-**1.21.10+ (may change again):**
-```java
-Identifier.of("mod_id", "path")
-```
-
-#### Sword Items
-
-**1.21.1:**
-```java
-public class Weapon extends SwordItem {
-    public Weapon(Tier tier, float damage, float speed, Properties props) {
-        super(tier, props.attributes(SwordItem.createAttributes(tier, (int) damage, speed)));
-    }
-}
-```
-
-**1.21.10+:**
-```java
-public class Weapon extends Item {
-    public Weapon(ToolMaterial material, float damage, float speed, Properties props) {
-        super(material.applySwordProperties(props, damage, speed));
-    }
-}
-```
-
-#### Model APIs (Fabric)
-
-**1.21.1:**
-```java
-pluginContext.modifyModelAfterBake().register((model, ctx) -> {
-    return new EpicBakedModel(model, largeModel);
-});
-```
-
-**1.21.10+:**
-```java
-pluginContext.modifyItemModelAfterBake().register((itemModel, ctx) -> {
-    return new EpicBakedModel(itemModel, largeModel);
-});
-```
-
-#### Model APIs (NeoForge)
-
-**1.21.1:**
-```java
-@SubscribeEvent
-public void onModifyBakingResult(ModelEvent.ModifyBakingResult event) {
-    var models = event.getModels();
-    models.put(location, new EpicBakedModel(small, large));
-}
-```
-
-**1.21.10+:**
-```java
-@SubscribeEvent
-public void onModifyBakingResult(ModelEvent.ModifyBakingResult event) {
-    var itemModels = event.getBakingResult().itemStackModels();
-    itemModels.put(location, new EpicBakedModel(small, large));
-}
-```
-
-### How to Research API Changes
-
-1. **Check Fabric API changelogs:** https://github.com/FabricMC/fabric/blob/1.22/CHANGELOG.md
-2. **Check NeoForge changelogs:** https://github.com/neoforged/NeoForge/blob/1.22.x/CHANGELOG.md
-3. **Search Fabric Discord:** https://discord.gg/v6v4pMv
-4. **Search NeoForge Discord:** https://discord.gg/neoforged
-5. **Compare with other mods:** Find a similar mod that already supports the new version
-
----
-
-## Step 8: Test the Build
-
-### Build the New Version
+Build and fix errors:
 
 ```powershell
 ./gradlew :appFabric:1.22.0:build
 ```
 
-### Expected Output
+See [05_NEOFORGE_API_CHANGES.md](05_NEOFORGE_API_CHANGES.md) and [06_FABRIC_API_CHANGES.md](06_FABRIC_API_CHANGES.md) for known changes between versions.
 
-```
-> Task :appCommon:compileJava UP-TO-DATE
-> Task :appCommon:processResources UP-TO-DATE
-> Task :appFabric:1.22.0:compileJava
-> Task :appFabric:1.22.0:processResources
-> Task :appFabric:1.22.0:classes
-> Task :appFabric:1.22.0:jar
-> Task :appFabric:1.22.0:shadowJar
-> Task :appFabric:1.22.0:remapJar
-> Task :appFabric:1.22.0:build
+### Research Resources
 
-BUILD SUCCESSFUL
-```
-
-### If Build Fails
-
-1. Read error messages carefully
-2. Fix one error at a time
-3. Rebuild after each fix
-4. Commit working changes incrementally
+- Fabric API changelogs: https://github.com/FabricMC/fabric
+- NeoForge changelogs: https://github.com/neoforged/NeoForge
+- Fabric Discord: https://discord.gg/v6v4pMv
+- NeoForge Discord: https://discord.gg/neoforged
 
 ---
 
-## Step 9: Test In-Game
-
-### Launch Development Client
+## Step 6: Build and Test
 
 ```powershell
-# Fabric
-./gradlew :appFabric:1.22.0:runClient
+# Build
+./gradlew :appFabric:1.22.0:build
 
-# NeoForge
-./gradlew :appNeoForge:1.22.0:runClient
+# Run client
+./gradlew :appFabric:1.22.0:runClient   # Fabric
+./gradlew :appNeoForge:1.22.0:runClient  # NeoForge
 ```
 
 ### Test Checklist
 
 - [ ] Game launches without crashes
-- [ ] Creative tab "Fantasy Weapons" appears
-- [ ] All weapons are listed
-- [ ] Weapons show correct textures in inventory
-- [ ] Weapons show large textures when held
+- [ ] Creative tab "Fantasy Weapons" appears with all weapons
+- [ ] Weapons show correct textures in inventory and when held
 - [ ] Config file generates correctly
 - [ ] Recipes work at smithing table
-- [ ] No console errors related to the mod
 
 ---
 
@@ -491,43 +298,32 @@ Identifier.of(MOD_ID, name)
 
 ---
 
-## Version-Specific Considerations
+## Version Notes
 
-### Fabric Version Notes
+### Fabric
 
 | MC Version | Key Changes |
 |------------|-------------|
-| 1.21.1 | Baseline |
+| 1.20.1 | Legacy, self-contained (own resources, `recipes/` plural, Fabric Loader) |
+| 1.21.1 | Baseline for appCommon integration |
 | 1.21.4 | ToolMaterial replaces Tier, SwordItem constructor changed |
 | 1.21.10 | Weapon extends Item (not SwordItem), ModelLoadingPlugin API changed |
 | 1.21.11 | Minor API cleanups |
 
-### NeoForge Version Notes
+### NeoForge / Forge
 
 | MC Version | Key Changes |
 |------------|-------------|
-| 1.21.1 | Baseline |
+| 1.20.1 | Legacy Minecraft Forge, self-contained (own resources, `recipes/` plural) |
+| 1.21.1 | Baseline NeoForge with appCommon integration |
 | 1.21.4 | ToolMaterial, ModelEvent changes |
 | 1.21.10 | StandaloneModelKey, ItemModel API |
 | 1.21.11 | Beta, minor changes |
 
-### Snapshot Versions
-
-When adding snapshot support:
-
-1. Use the snapshot identifier (e.g., `24w36a`)
-2. Expect frequent breaking changes
-3. Consider maintaining in a separate branch
-4. Mark clearly as experimental
-
 ### Removing Old Versions
 
-When dropping support for old MC versions:
-
-1. Remove the directory (`appFabric/1.20.1/`)
+1. Delete the directory (e.g. `appFabric/1.20.1/`)
 2. Remove from `settings.gradle`
-3. Update any documentation
-4. Consider keeping the last supported version for each MC major version
 
 ---
 
@@ -551,7 +347,7 @@ When dropping support for old MC versions:
 
 **Cause:** API changed in new MC version.
 
-**Fix:** Research the change (see Step 7) and update your code accordingly.
+**Fix:** Research the change (see Step 5) and update your code accordingly.
 
 ### Run fails with "Mixin injection failed"
 
@@ -563,12 +359,10 @@ When dropping support for old MC versions:
 
 ## Summary
 
-Adding a new Minecraft version:
-
 1. **Copy** closest existing version directory
-2. **Update** `gradle.properties` with new versions
+2. **Update** `gradle.properties` with new version numbers
 3. **Add** to `settings.gradle`
-4. **Build** and fix any API errors
-5. **Test** in-game thoroughly
+4. **Build** and fix API errors
+5. **Test** in-game
 
-The unified structure means `appCommon` never needs changes—all version-specific code stays in the loader directories.
+`appCommon` never needs changes — all version-specific code stays in the loader directories.
