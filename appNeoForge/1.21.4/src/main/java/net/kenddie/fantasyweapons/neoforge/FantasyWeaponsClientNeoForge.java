@@ -4,8 +4,6 @@ import net.kenddie.fantasyweapons.FantasyWeapons;
 import net.kenddie.fantasyweapons.neoforge.model.EpicBakedModel;
 import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.resources.ResourceLocation;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.client.event.ModelEvent;
 
@@ -18,7 +16,6 @@ public class FantasyWeaponsClientNeoForge {
     private static final Map<ResourceLocation, ResourceLocation> COMPLIANCES = new HashMap<>();
 
     @SubscribeEvent
-    @OnlyIn(Dist.CLIENT)
     public void onRegisterAdditional(ModelEvent.RegisterAdditional event) {
         for (var item : FWItems.getAllItems()) {
             var itemName = item.getDescriptionId().substring(("item." + FantasyWeapons.MOD_ID + ".").length());
@@ -40,7 +37,6 @@ public class FantasyWeaponsClientNeoForge {
     }
 
     @SubscribeEvent
-    @OnlyIn(Dist.CLIENT)
     public void onModifyBakingResult(ModelEvent.ModifyBakingResult event) {
         var bakingResult = event.getBakingResult();
         var blockStateModels = bakingResult.blockStateModels();
