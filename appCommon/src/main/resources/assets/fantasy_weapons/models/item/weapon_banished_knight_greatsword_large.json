@@ -1,0 +1,6 @@
+{
+	"parent": "fantasy_weapons:item/handheld_large_3x",
+	"textures": {
+		"layer0": "fantasy_weapons:item/weapon_banished_knight_greatsword_large"
+	}
+}

@@ -1,0 +1,113 @@
+plugins {
+    id 'java-library'
+    id 'net.neoforged.moddev' version '2.0.141'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
+}
+
+version = mod_version
+group = mod_group_id
+
+base {
+    archivesName = mod_id
+}
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+
+java {
+    withSourcesJar()
+}
+
+// Extract configlib classes into the mod's module for dev runs.
+// NeoForge 21.4 uses JPMS module layers that prevent external library JARs
+// on the bootstrap classpath from being visible to the mod layer.
+def configlibDevClasses = layout.buildDirectory.dir("configlib-devonly")
+configurations {
+    shadow
+    configlibExtract {
+        extendsFrom shadow
+    }
+}
+tasks.register('extractConfiglib', Sync) {
+    from { configurations.configlibExtract.collect { zipTree(it) } }
+    into configlibDevClasses
+    exclude 'META-INF/**'
+}
+sourceSets.main.output.dir(configlibDevClasses, builtBy: 'extractConfiglib')
+
+neoForge {
+    version = project.neo_version
+
+    runs {
+        client {
+            client()
+        }
+        server {
+            server()
+            programArgument '--nogui'
+        }
+    }
+
+    mods {
+        "${mod_id}" {
+            sourceSet(sourceSets.main)
+            sourceSet(project(':appCommon').sourceSets.main)
+        }
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation project(':appCommon')
+    compileOnly "de.exlll:configlib-yaml:4.5.0"
+    shadow "de.exlll:configlib-yaml:4.5.0"
+}
+
+processResources {
+    from project(':appCommon').sourceSets.main.resources
+
+    var replaceProperties = [
+        mod_id: mod_id, mod_name: mod_name, mod_version: mod_version,
+        mod_license: mod_license, mod_authors: mod_authors, mod_description: mod_description
+    ]
+    inputs.properties replaceProperties
+    filesMatching("META-INF/neoforge.mods.toml") {
+        expand replaceProperties
+    }
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+
+    // MC 1.21.2+ changed ingredient format from {"item":"..."} to plain strings
+    doLast {
+        fileTree(destinationDir) {
+            include 'data/fantasy_weapons/recipe/*.json'
+        }.each { file ->
+            def text = file.text
+            def transformed = text.replaceAll(/\{\s*"item"\s*:\s*"([^"]+)"\s*\}/, '"$1"')
+            if (transformed != text) {
+                file.text = transformed
+            }
+        }
+    }
+}
+
+shadowJar {
+    configurations = [project.configurations.shadow]
+    relocate("de.exlll", "net.kenddie.exlll")
+    relocate("org.snakeyaml", "net.kenddie.snakeyaml")
+}
+
+jar {
+    from(project(':appCommon').sourceSets.main.output.classesDirs)
+    from("LICENSE") {
+        rename { "${it}_${project.base.archivesName.get()}" }
+    }
+    // Exclude extracted configlib classes (dev-only; distribution uses shadowJar)
+    exclude 'de/exlll/**'
+    exclude 'org/snakeyaml/**'
+}
+
+sourcesJar {
+    from project(':appCommon').sourceSets.main.allSource
+}
