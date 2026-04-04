@@ -7,8 +7,6 @@ import net.minecraft.client.renderer.item.ItemModel;
 import net.minecraft.client.renderer.item.ModelRenderProperties;
 import net.minecraft.client.resources.model.BlockModelRotation;
 import net.minecraft.resources.ResourceLocation;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.client.event.ModelEvent;
 import net.neoforged.neoforge.client.model.standalone.SimpleUnbakedStandaloneModel;
@@ -24,7 +22,6 @@ public class FantasyWeaponsClientNeoForge {
     private static final Map<ResourceLocation, StandaloneModelKey<ItemModel>> LARGE_MODEL_KEYS = new HashMap<>();
 
     @SubscribeEvent
-    @OnlyIn(Dist.CLIENT)
     public void onRegisterStandalone(ModelEvent.RegisterStandalone event) {
         for (var item : FWItems.getAllItems()) {
             var itemName = item.getDescriptionId().substring(("item." + FantasyWeapons.MOD_ID + ".").length());
@@ -53,7 +50,6 @@ public class FantasyWeaponsClientNeoForge {
     }
 
     @SubscribeEvent
-    @OnlyIn(Dist.CLIENT)
     public void onModifyBakingResult(ModelEvent.ModifyBakingResult event) {
         var itemModels = event.getBakingResult().itemStackModels();
         var standaloneModels = event.getBakingResult().standaloneModels();

@@ -8,7 +8,9 @@ public class FWWeaponBasicSwordItem extends Item {
     private final float attackDamage;
 
     public FWWeaponBasicSwordItem(ToolMaterial material, float damage, float speed, Item.Properties properties) {
-        super(material.applySwordProperties(properties, damage, speed));
+        // Subtract material bonus so the internal addition cancels out:
+        // applySwordProperties computes modifier = attackDamageBonus + adjustedDamage = damage
+        super(material.applySwordProperties(properties, damage - material.attackDamageBonus(), speed));
         this.attackDamage = damage;
     }
 

@@ -17,18 +17,18 @@ import java.util.List;
 
 public final class FWItems {
 
-    public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(Registries.ITEM, FantasyWeapons.MOD_ID);
+    public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(FantasyWeapons.MOD_ID);
     public static final DeferredRegister<CreativeModeTab> TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, FantasyWeapons.MOD_ID);
     private static final List<DeferredHolder<Item, ? extends Item>> ALL_ITEMS = new ArrayList<>();
 
     static {
         for (String name : FantasyWeapons.BASIC_ITEM_NAMES) {
-            ALL_ITEMS.add(ITEMS.register(name, () -> new Item(new Item.Properties())));
+            ALL_ITEMS.add(ITEMS.registerItem(name, Item::new));
         }
         for (String name : FantasyWeapons.WEAPON_NAMES) {
-            ALL_ITEMS.add(ITEMS.register(name, () -> {
+            ALL_ITEMS.add(ITEMS.registerItem(name, properties -> {
                 var config = FWConfig.FW_CONFIG.getSwordConfigOrDefault(name);
-                return new FWWeaponBasicSwordItem(ToolMaterial.NETHERITE, config.damage, config.speed, new Item.Properties());
+                return new FWWeaponBasicSwordItem(ToolMaterial.NETHERITE, config.damage, config.speed, properties);
             }));
         }
         TABS.register("fw_tab", () -> CreativeModeTab.builder()
