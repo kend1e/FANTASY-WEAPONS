@@ -16,3 +16,10 @@ dependencies {
     compileOnly 'com.google.code.gson:gson:2.10.1'
     compileOnly 'de.exlll:configlib-yaml:4.5.0'
 }
+
+// Exclude recipe files from appCommon's build output.
+// Each platform module copies recipes from source via processResources
+// and optionally transforms the ingredient format for its MC version.
+processResources {
+    exclude 'data/fantasy_weapons/recipe/**'
+}
