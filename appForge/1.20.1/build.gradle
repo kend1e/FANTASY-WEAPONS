@@ -14,6 +14,24 @@ base {
     archivesName = mod_id
 }
 
+// Extract configlib classes into the mod's classes dir for dev runs.
+// Forge 47.x uses SecureJarHandler / JPMS module layers that reject split packages
+// (configlib-yaml and configlib-core both use de.exlll.configlib).
+// By extracting the classes into the compiled output, they become part of
+// the mod's own module and are visible without cross-layer reads.
+configurations {
+    configlibExtract {
+        extendsFrom shadow
+    }
+}
+tasks.register('extractConfiglib', Copy) {
+    from { configurations.configlibExtract.collect { zipTree(it) } }
+    into { sourceSets.main.java.classesDirectory }
+    exclude 'META-INF/**'
+    dependsOn compileJava
+}
+tasks.named('classes') { dependsOn 'extractConfiglib' }
+
 // Mojang ships Java 17 to end users in 1.18+, so your mod should target Java 17.
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
@@ -147,7 +165,7 @@ dependencies {
     // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
     // http://www.gradle.org/docs/current/userguide/dependency_management.html
     shadow "de.exlll:configlib-yaml:4.5.0" // To include in the shadow jar
-    minecraftLibrary("de.exlll:configlib-yaml:4.5.0") // To include in the runtime classpath
+    compileOnly "de.exlll:configlib-yaml:4.5.0" // Compile-time only; extracted classes handle dev runtime
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.
@@ -171,6 +189,10 @@ tasks.named('processResources', ProcessResources).configure {
 
 // Example for how to get properties into the manifest for reading at runtime.
 tasks.named('jar', Jar).configure {
+    // Exclude extracted configlib classes (dev-only; distribution uses shadowReobfJar)
+    exclude 'de/exlll/**'
+    exclude 'org/snakeyaml/**'
+
     manifest {
         attributes([
                 'Specification-Title'     : mod_id,
