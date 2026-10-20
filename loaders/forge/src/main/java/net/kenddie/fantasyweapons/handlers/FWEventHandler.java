@@ -1,6 +1,7 @@
 package net.kenddie.fantasyweapons.handlers;
 
 import net.kenddie.fantasyweapons.model.EpicBakedModel;
+import net.kenddie.fantasyweapons.model.ForgeModelLocations;
 import net.kenddie.fantasyweapons.model.WeaponModels;
 import net.kenddie.fantasyweapons.shared.ModConstants;
 import net.minecraftforge.api.distmarker.Dist;
@@ -12,7 +13,7 @@ import net.minecraftforge.fml.common.Mod;
 public final class FWEventHandler {
     @SubscribeEvent
     public static void registerModels(ModelEvent.RegisterAdditional event) {
-        WeaponModels.pairs().values().forEach(event::register);
+        WeaponModels.pairs().values().forEach(id -> event.register(ForgeModelLocations.additional(id)));
     }
 
     @SubscribeEvent
@@ -20,7 +21,7 @@ public final class FWEventHandler {
         var models = event.getModels();
         WeaponModels.pairs().forEach((smallId, largeId) -> {
             var small = models.get(smallId);
-            var large = models.get(largeId);
+            var large = models.get(ForgeModelLocations.additional(largeId));
             if (small != null && large != null) models.put(smallId, new EpicBakedModel(small, large));
         });
     }

@@ -13,6 +13,7 @@ dependencies {
     implementation(libs.fantasy.build)
     implementation(libs.fantasy.fabric)
     implementation(libs.fantasy.forge)
+    implementation(libs.fantasy.neoforge)
     implementation(libs.gson)
     testImplementation(libs.junit)
 }

@@ -38,6 +38,16 @@ class ContentResourcesTest {
         assertEquals("fantasy_weapons:weapon_sharp_sword", recipe.getAsJsonObject("base").get("item").asString)
     }
 
+    @Test fun generates1211RecipeFormat() {
+        val files = contentResources(content, languages, "1.21.1")
+        assertFalse(files.keys.any { "/recipes/" in it })
+        for (id in content.itemIds) {
+            val recipe = JsonParser.parseString(files.getValue("data/fantasy_weapons/recipe/$id.json")).asJsonObject
+            assertEquals("fantasy_weapons:$id", recipe.getAsJsonObject("result").get("id").asString)
+            assertFalse(recipe.getAsJsonObject("result").has("item"))
+        }
+    }
+
     @Test fun rejectsDuplicateItemsAndInvalidPatterns() {
         assertThrows(IllegalArgumentException::class.java) {
             contentCatalog("test", "a", "minecraft:stick", "minecraft:stone") {
@@ -51,6 +61,6 @@ class ContentResourcesTest {
         assertThrows(IllegalArgumentException::class.java) {
             contentResources(content, translations(content.namespace) { language("en_us") { entry(content.tabTranslationKey, "Weapons") } }, "1.20.1")
         }
-        assertThrows(IllegalArgumentException::class.java) { contentResources(content, languages, "1.21.1") }
+        assertThrows(IllegalArgumentException::class.java) { contentResources(content, languages, "1.22") }
     }
 }

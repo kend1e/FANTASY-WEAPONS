@@ -8,6 +8,7 @@ import fantasy.weapons.definitions.content
 import fantasy.weapons.definitions.languages
 import fantasy.weapons.definitions.mod
 import fantasy.weapons.definitions.targets
+import fantasy.weapons.definitions.minecraftVersions
 import fantasy.gradle.ExportRelease
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -20,26 +21,35 @@ import org.gradle.kotlin.dsl.*
 class WeaponsPlatformPlugin : Plugin<Project> {
     override fun apply(project: Project): Unit = with(project) {
         val target = targets.single { it.path == path }
-        configureMod(mod, target)
+        configureMod(mod, target, rootProject.layout.projectDirectory.dir("loaders/${target.loader.id}/src/main/templates"))
         pluginManager.apply("fantasy.build.${target.loader.id}")
         val root = rootProject.layout.projectDirectory
         extensions.configure<PlatformExtension> {
+            sources.from(root.dir("minecraft/common/src/main/java"))
             sources.from(root.dir("minecraft/${target.minecraft}/src/main/java"))
             sources.from(root.dir("loaders/${target.loader.id}/src/main/java"))
+            sources.from(root.dir("loaders/${target.loader.id}/${target.minecraft}/src/main/java"))
         }
         dependencies.add("sharedSourcesDependencies", dependencies.project(mapOf("path" to ":core", "configuration" to "sharedSources")))
         dependencies.add("sharedResourcesDependencies", dependencies.project(mapOf("path" to ":core", "configuration" to "sharedResources")))
         extensions.configure<ResourcesExtension> {
             sources.from(root.dir("resources"))
             generate("generateContentResources") {
-                contents.set(contentResources(content, languages, target.minecraft))
+                contents.set(contentResources(content, languages, target.minecraft) + mapOf(
+                    "pack.mcmeta" to minecraftVersions.getValue(target.minecraft).packMetadata(mod.name),
+                ))
                 outputDirectory.set(layout.buildDirectory.dir("generated/resources/content"))
             }
         }
         tasks.named("generateResources") { dependsOn(configurations.named("sharedResourceFiles")) }
         extensions.configure<SourceSetContainer> {
-            named("test") { java.srcDir(root.dir("loaders/${target.loader.id}/src/test/java")) }
+            named("test") {
+                java.srcDir(root.dir("loaders/${target.loader.id}/src/test/java"))
+                java.srcDir(root.dir("loaders/${target.loader.id}/${target.minecraft}/src/test/java"))
+                java.srcDir(root.dir("tests/client/java"))
+            }
         }
+        repositories.mavenCentral()
         val libs = extensions.getByType<VersionCatalogsExtension>().named("libs")
         dependencies.add("testImplementation", libs.findLibrary("junit").get())
         configureWeaponsTests()

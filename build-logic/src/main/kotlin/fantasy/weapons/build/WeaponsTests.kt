@@ -3,7 +3,6 @@ package fantasy.weapons.build
 import fantasy.gradle.GenerateFiles
 import fantasy.gradle.PrepareTestRun
 import fantasy.gradle.Target
-import fantasy.gradle.Loader
 import fantasy.weapons.definitions.*
 import org.gradle.api.Project
 import org.gradle.api.GradleException
@@ -15,8 +14,9 @@ data class WeaponsTestRun(val report: org.gradle.api.provider.Provider<org.gradl
 
 fun Project.configureWeaponsTests() {
     val target = extensions.getByType<Target>()
-    require(target.minecraft == "1.20.1") { "No test adapter for ${target.minecraft}" }
-    val fabric = target.loader == Loader.FABRIC
+    val version = minecraftVersions.getValue(target.minecraft)
+    val registration = version.tests.getValue(target.loader)
+    val fabric = registration.fabric
     val profile = providers.gradleProperty("testProfile").getOrElse("defaults")
     require(profile in setOf("defaults", "configured")) { "Unknown test profile: $profile" }
     val changed = content.weapons.first().id
@@ -30,12 +30,12 @@ fun Project.configureWeaponsTests() {
                 "addition" to content.addition, "weapons" to content.weapons,
                 "materials" to content.materials,
             )))
-            put("pack.mcmeta", json(mapOf("pack" to mapOf("pack_format" to 15, "description" to "Weapon tests"))))
+            put("pack.mcmeta", json(mapOf("pack" to mapOf("pack_format" to version.dataPackFormat, "description" to "Weapon tests"))))
             if (fabric) put("fabric.mod.json", json(mapOf(
                 "schemaVersion" to 1, "id" to "fantasy_weapons_tests", "version" to "1.0",
                 "entrypoints" to mapOf("fabric-gametest" to listOf("net.kenddie.fantasyweapons.test.WeaponTests")),
                 "depends" to mapOf(mod.id to "*"),
-            ))) else put("META-INF/mods.toml", """
+            ))) else put("META-INF/${registration.metadataFile}", """
                 modLoader="javafml"
                 loaderVersion="${target.loaderRange}"
                 license="DSMSLv2"
@@ -50,15 +50,14 @@ fun Project.configureWeaponsTests() {
     val sources = tasks.register<GenerateFiles>("generateTestSources") {
         contents.set(buildMap {
             val methods = weaponTests.entries.joinToString("\n") { (id, owner) ->
-                val annotation = if (fabric) "@net.minecraft.gametest.framework.GameTest(template = \"fabric-gametest-api-v1:empty\")"
-                    else "@net.minecraft.gametest.framework.GameTest(template = \"empty\", templateNamespace = \"fantasy_weapons_tests\")"
+                val annotation = registration.annotation()
                 "    $annotation\n    public ${if (fabric) "" else "static "}void $id(net.minecraft.gametest.framework.GameTestHelper helper) { $owner.run(helper); }"
             }
-            val holder = if (fabric) "" else "@net.minecraftforge.gametest.GameTestHolder(\"fantasy_weapons_tests\")\n@net.minecraftforge.gametest.PrefixGameTestTemplate(false)"
+            val holder = registration.holder()
             put("net/kenddie/fantasyweapons/test/WeaponTests.java", "package net.kenddie.fantasyweapons.test;\n$holder\npublic final class WeaponTests {\n$methods\n}")
             if (!fabric) put("net/kenddie/fantasyweapons/test/TestMod.java", """
                 package net.kenddie.fantasyweapons.test;
-                @net.minecraftforge.fml.common.Mod("fantasy_weapons_tests")
+                @${registration.fmlPackage}.common.Mod("fantasy_weapons_tests")
                 public final class TestMod {
                     public TestMod() throws Exception {
                         net.minecraft.gametest.framework.GlobalTestReporter.replaceWith(
@@ -73,15 +72,20 @@ fun Project.configureWeaponsTests() {
     extensions.configure<SourceSetContainer> {
         val main = getByName("main")
         named("test") {
+            java.srcDir(rootProject.file("tests/common/java"))
             java.srcDir(rootProject.file("tests/minecraft/${target.minecraft}/java"))
             java.srcDir(sources.flatMap { it.outputDirectory })
             resources.srcDir(generated.flatMap { it.outputDirectory })
-            resources.srcDir(rootProject.file("tests/resources"))
+            resources.srcDir(tasks.register<org.gradle.api.tasks.Sync>("prepareTestStructures") {
+                from(rootProject.file("tests/resources/empty.nbt")) { into("data/fantasy_weapons_tests/${version.structureDirectory}") }
+                into(layout.buildDirectory.dir("generated/resources/test-scenes"))
+            })
             compileClasspath += main.output + main.compileClasspath
             runtimeClasspath += main.output + main.runtimeClasspath
         }
     }
-    val configPath = if (fabric) "config/fantasy_weapons.json" else "world/serverconfig/fantasy_weapons-server.toml"
+    val configPath = if (fabric) "config/fantasy_weapons.json"
+        else "${registration.configDirectory}/fantasy_weapons-server.toml"
     val prepare = tasks.register<PrepareTestRun>("prepareTestRun") {
         runDirectory.set(layout.buildDirectory.dir("run/test"))
         filesToRemove.set(setOf(configPath))
@@ -89,10 +93,10 @@ fun Project.configureWeaponsTests() {
             json(mapOf("weapons" to mapOf(changed to mapOf("damage" to damage, "speed" to speed))))
             else "[weapons.$changed]\ndamage = $damage\nspeed = $speed\n"))
     }
-    val runName = if (fabric) "runGameTest" else "runTestGameTestServer"
+    val runName = registration.runTask
     val report = layout.buildDirectory.file("reports/test/$profile/results.xml")
     extensions.add("weaponsTestRun", WeaponsTestRun(report))
-    val expected = weaponTests.keys.map { if (fabric) "weapontests.$it" else it }.toSet()
+    val expected = weaponTests.keys.map(registration::reportName).toSet()
     tasks.matching { it.name == runName }.configureEach {
         dependsOn(prepare, "testClasses")
         outputs.upToDateWhen { false }
