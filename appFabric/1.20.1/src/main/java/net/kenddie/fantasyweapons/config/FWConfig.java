@@ -1,33 +1,48 @@
 package net.kenddie.fantasyweapons.config;
 
-import de.exlll.configlib.Configuration;
+import me.shedaniel.autoconfig.AutoConfig;
+import me.shedaniel.autoconfig.ConfigData;
+import me.shedaniel.autoconfig.annotation.Config;
+import me.shedaniel.autoconfig.serializer.GsonConfigSerializer;
 
-import java.nio.file.Path;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 import static net.kenddie.fantasyweapons.item.FWItemManager.FW_ITEM_MANAGER;
 
-@Configuration
-public class FWConfig {
-
-    public static final FWConfig FW_CONFIG = FWConfigManager.updateAndLoadConfig(Path.of("config/fantasy_weapons.yml"), FWConfig.class);
+@Config(name = "fantasy_weapons")
+public final class FWConfig implements ConfigData {
+    private static Map<String, WeaponSettings> active = Map.of();
+    public Map<String, WeaponConfig> weapons = new TreeMap<>();
 
     public FWConfig() {
-        this.weapons = new HashMap<>();
-        FW_ITEM_MANAGER.getDeclaredSwords().forEach(id -> weapons.put(id.getPath(), SwordConfig.DEFAULT));
+        FW_ITEM_MANAGER.getDeclaredSwords().forEach(id -> weapons.put(id.getPath(), new WeaponConfig()));
     }
 
-    public Map<String, SwordConfig> weapons;
-
-    public SwordConfig getSwordConfigOrDefault(String id) {
-        return weapons.computeIfAbsent(id, k -> SwordConfig.DEFAULT);
+    public static void register() {
+        var config = AutoConfig.register(FWConfig.class, GsonConfigSerializer::new).getConfig();
+        var settings = new TreeMap<String, WeaponSettings>();
+        config.weapons.forEach((id, entry) -> settings.put(id, new WeaponSettings(entry.damage, entry.speed)));
+        active = Map.copyOf(settings);
     }
 
-    @Configuration
-    public static class SwordConfig {
-        public static final SwordConfig DEFAULT = new SwordConfig();
-        public float damage = 9;
-        public float speed = -2.4f;
+    public static WeaponSettings weapon(String id) {
+        return active.getOrDefault(id, WeaponSettings.DEFAULT);
+    }
+
+    @Override
+    public void validatePostLoad() {
+        if (weapons == null) weapons = new TreeMap<>();
+        weapons.values().removeIf(java.util.Objects::isNull);
+        FW_ITEM_MANAGER.getDeclaredSwords().forEach(id -> weapons.computeIfAbsent(id.getPath(), key -> new WeaponConfig()));
+        weapons.values().forEach(entry -> {
+            if (!WeaponSettings.validDamage(entry.damage)) entry.damage = WeaponSettings.DEFAULT.damage();
+            if (!WeaponSettings.validSpeed(entry.speed)) entry.speed = WeaponSettings.DEFAULT.speed();
+        });
+    }
+
+    public static final class WeaponConfig {
+        public double damage = WeaponSettings.DEFAULT.damage();
+        public double speed = WeaponSettings.DEFAULT.speed();
     }
 }

@@ -1,7 +1,7 @@
 package net.kenddie.fantasyweapons.item;
 
 import net.kenddie.fantasyweapons.FantasyWeapons;
-import net.kenddie.fantasyweapons.config.FWConfig.SwordConfig;
+import net.kenddie.fantasyweapons.config.FWConfig;
 import net.kenddie.fantasyweapons.item.weapon.lib.FWWeaponBasicSwordItem;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
@@ -12,7 +12,6 @@ import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.*;
 
-import static net.kenddie.fantasyweapons.config.FWConfig.FW_CONFIG;
 
 /**
  * Manages all items in the mod.
@@ -102,8 +101,7 @@ public class FWItemManager {
     private void registerSwords(DeferredRegister<Item> forgeRegistry) {
         for (ResourceLocation id : declaredSwords) {
             forgeRegistry.register(id.getPath(), () -> {
-                SwordConfig config = FW_CONFIG.getSwordConfigOrDefault(id.getPath());
-                FWWeaponBasicSwordItem item = new FWWeaponBasicSwordItem(Tiers.NETHERITE, config.damage, config.speed, new Item.Properties());
+                FWWeaponBasicSwordItem item = new FWWeaponBasicSwordItem(Tiers.NETHERITE, () -> FWConfig.weapon(id.getPath()), new Item.Properties());
                 registered.put(id, item);
                 return item;
             });
