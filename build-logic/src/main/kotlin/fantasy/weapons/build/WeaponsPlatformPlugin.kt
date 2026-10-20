@@ -42,6 +42,7 @@ class WeaponsPlatformPlugin : Plugin<Project> {
         }
         val libs = extensions.getByType<VersionCatalogsExtension>().named("libs")
         dependencies.add("testImplementation", libs.findLibrary("junit").get())
+        configureWeaponsTests()
         if (target.loader == Loader.FORGE) extensions.configure<PublishingExtension> {
             val release = tasks.named<ExportRelease>("exportRelease")
             publications.register<MavenPublication>("mavenJava") {

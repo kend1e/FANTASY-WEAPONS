@@ -10,3 +10,9 @@ tasks.register("generateResources") {
     description = "Generates catalogs, recipes, item models, metadata and translations."
     dependsOn(modules.map { "${it.path}:generateResources" })
 }
+
+tasks.register("test") {
+    group = "verification"
+    description = "Runs unit tests and Minecraft server tests."
+    dependsOn(modules.map { "${it.path}:test" })
+}
