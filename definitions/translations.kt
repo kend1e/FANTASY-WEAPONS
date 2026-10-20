@@ -1,8 +1,8 @@
 package fantasy.weapons.definitions
 
-import fantasy.weapons.build.translations
+import fantasy.gradle.resources.translations
 
-val languages = translations(namespace = mod.id) {
+val languages = translations(namespace = mod.id, tab = content.tab) {
     language("en_us") {
         tabTitle("Fantasy Weapons")
         item("blazing_stone", "Blazing Stone")

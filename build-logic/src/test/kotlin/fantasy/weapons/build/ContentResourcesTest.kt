@@ -1,6 +1,8 @@
 package fantasy.weapons.build
 
 import com.google.gson.JsonParser
+import fantasy.gradle.content.weapons.*
+import fantasy.gradle.resources.translations
 import fantasy.weapons.definitions.content
 import fantasy.weapons.definitions.languages
 import org.junit.Assert.*
@@ -50,7 +52,7 @@ class ContentResourcesTest {
 
     @Test fun rejectsDuplicateItemsAndInvalidPatterns() {
         assertThrows(IllegalArgumentException::class.java) {
-            contentCatalog("test", "a", "minecraft:stick", "minecraft:stone") {
+            contentCatalog("test", "a", "minecraft:stick", "minecraft:stone", tab = "weapons") {
                 weapon("a", "minecraft:coal"); weapon("a", "minecraft:coal")
             }
         }

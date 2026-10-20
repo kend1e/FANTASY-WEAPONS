@@ -1,9 +1,10 @@
 package fantasy.weapons.definitions
 
-import fantasy.weapons.build.*
+import fantasy.gradle.content.weapons.*
 
 val content = contentCatalog(
     namespace = mod.id,
+    tab = "fw_tab",
     tabIcon = "weapon_eclipse_soldier_spear",
     base = "minecraft:netherite_sword",
     addition = "${mod.id}:blazing_stone",
