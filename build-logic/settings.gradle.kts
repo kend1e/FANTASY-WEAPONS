@@ -1,17 +1,12 @@
-rootProject.name = "build-logic"
-
 pluginManagement {
+    includeBuild("../../fantasy-build")
     repositories {
-        google()
-        mavenCentral()
         gradlePluginPortal()
+        mavenCentral()
     }
 }
+rootProject.name = "fantasy-weapons-build-logic"
 
 dependencyResolutionManagement {
-    repositories {
-        google()
-        mavenCentral()
-        gradlePluginPortal()
-    }
+    versionCatalogs { create("libs") { from(files("../gradle/libs.versions.toml")) } }
 }

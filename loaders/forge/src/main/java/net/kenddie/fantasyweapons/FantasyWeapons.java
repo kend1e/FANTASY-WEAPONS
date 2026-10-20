@@ -1,0 +1,21 @@
+package net.kenddie.fantasyweapons;
+
+import net.kenddie.fantasyweapons.config.FWConfig;
+import net.kenddie.fantasyweapons.item.FWCreativeModTabs;
+import net.kenddie.fantasyweapons.item.FWItemRegistration;
+import net.kenddie.fantasyweapons.shared.ModConstants;
+import net.kenddie.fantasyweapons.shared.content.WeaponCatalog;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+
+@Mod(FantasyWeapons.MOD_ID)
+public class FantasyWeapons {
+    public static final String MOD_ID = ModConstants.MOD_ID;
+
+    public FantasyWeapons() {
+        var bus = FMLJavaModLoadingContext.get().getModEventBus();
+        FWConfig.register(bus, WeaponCatalog.INSTANCE.weaponIds());
+        FWItemRegistration.register(bus);
+        FWCreativeModTabs.register(bus);
+    }
+}
