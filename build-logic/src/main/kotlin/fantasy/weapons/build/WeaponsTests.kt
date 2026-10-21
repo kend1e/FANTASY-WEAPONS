@@ -26,7 +26,7 @@ fun Project.configureWeaponsTests() {
         module = TestModule("${mod.id}_tests", "net.kenddie.fantasyweapons.test", "WeaponTests", "${mod.id}.test.report"),
         cases = weaponTests,
         sourceDirectories = listOf("tests/common/java", "tests/minecraft/${target.minecraft}/java",
-            "loaders/${target.loader.id}/src/test/java", "loaders/${target.loader.id}/${target.minecraft}/src/test/java", "tests/client/java"),
+            "loaders/${target.loader.id}/src/test/java", "tests/client/java"),
         profile = profile,
         resources = mapOf("weapon_test_expectations.json" to json(mapOf(
             "changed" to if (profile == "configured") changed else "", "damage" to damage, "speed" to speed,
