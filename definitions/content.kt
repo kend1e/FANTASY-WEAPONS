@@ -1,6 +1,7 @@
 package fantasy.weapons.definitions
 
 import fantasy.gradle.content.weapons.*
+import fantasy.gradle.content.ShapedRecipe
 
 val content = contentCatalog(
     namespace = mod.id,

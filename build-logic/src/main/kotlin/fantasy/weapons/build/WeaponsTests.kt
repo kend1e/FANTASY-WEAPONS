@@ -20,7 +20,7 @@ fun Project.configureWeaponsTests() {
     val speed = -1.25
     val configPath = when (target.loader) {
         Loader.FABRIC -> "config/${mod.id}.json"
-        else -> "${version.loader(target.loader).serverConfigDirectory}/${mod.id}-server.toml"
+        else -> "${version.loader(target.loader).testServerConfigDirectory}/${mod.id}-server.toml"
     }
     configureModTests(TestSuite(
         module = TestModule("${mod.id}_tests", "net.kenddie.fantasyweapons.test", "WeaponTests", "${mod.id}.test.report"),
