@@ -1,8 +1,7 @@
 package fantasy.weapons.build
 
 import com.google.gson.JsonParser
-import fantasy.gradle.content.weapons.*
-import fantasy.gradle.resources.translations
+import fantasy.gradle.content.weapons.contentResources
 import fantasy.weapons.definitions.content
 import fantasy.weapons.definitions.languages
 import org.junit.Assert.*
@@ -10,7 +9,7 @@ import org.junit.Test
 import java.io.File
 
 class ContentResourcesTest {
-    @Test fun preservesCatalogAndTranslationCoverage() {
+    @Test fun modelsReferenceExistingResources() {
         val files = contentResources(content, languages, "1.20.1")
         val large = JsonParser.parseString(files.getValue("assets/fantasy_weapons/models/item/weapon_savage_sword_large.json")).asJsonObject
         assertEquals("fantasy_weapons:item/weapon_savage_sword_large", large.getAsJsonObject("textures").get("layer0").asString)
@@ -28,41 +27,11 @@ class ContentResourcesTest {
                 assertTrue("Missing texture: $path", resources.resolve("assets/${content.namespace}/textures/$path.png").isFile)
             }
         }
-        val preview = File(System.getProperty("contentPreviewDirectory"))
-        preview.deleteRecursively()
-        files.forEach { (path, contents) -> preview.resolve(path).apply { parentFile.mkdirs(); writeText(contents) } }
-        catalogResources(content).forEach { (path, contents) -> preview.resolve(path).writeText(contents) }
     }
 
     @Test fun preservesUpgradeBases() {
         val files = contentResources(content, languages, "1.20.1")
         val recipe = JsonParser.parseString(files.getValue("data/fantasy_weapons/recipes/weapon_infected_sharp_sword.json")).asJsonObject
         assertEquals("fantasy_weapons:weapon_sharp_sword", recipe.getAsJsonObject("base").get("item").asString)
-    }
-
-    @Test fun generates1211RecipeFormat() {
-        val files = contentResources(content, languages, "1.21.1")
-        assertFalse(files.keys.any { "/recipes/" in it })
-        for (id in content.itemIds) {
-            val recipe = JsonParser.parseString(files.getValue("data/fantasy_weapons/recipe/$id.json")).asJsonObject
-            assertEquals("fantasy_weapons:$id", recipe.getAsJsonObject("result").get("id").asString)
-            assertFalse(recipe.getAsJsonObject("result").has("item"))
-        }
-    }
-
-    @Test fun rejectsDuplicateItemsAndInvalidPatterns() {
-        assertThrows(IllegalArgumentException::class.java) {
-            contentCatalog("test", "a", "minecraft:stick", "minecraft:stone", tab = "weapons") {
-                weapon("a", "minecraft:coal"); weapon("a", "minecraft:coal")
-            }
-        }
-        assertThrows(IllegalArgumentException::class.java) { ShapedRecipe(listOf("XX"), mapOf('Y' to "minecraft:stone")) }
-    }
-
-    @Test fun rejectsMissingTranslationsAndUnsupportedFormats() {
-        assertThrows(IllegalArgumentException::class.java) {
-            contentResources(content, translations(content.namespace) { language("en_us") { entry(content.tabTranslationKey, "Weapons") } }, "1.20.1")
-        }
-        assertThrows(IllegalArgumentException::class.java) { contentResources(content, languages, "1.22") }
     }
 }

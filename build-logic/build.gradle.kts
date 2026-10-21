@@ -44,5 +44,4 @@ tasks.test {
     useJUnit()
     inputs.dir("../resources")
     systemProperty("staticResourcesDirectory", layout.projectDirectory.dir("../resources").asFile.absolutePath)
-    systemProperty("contentPreviewDirectory", layout.buildDirectory.dir("content-preview").get().asFile.absolutePath)
 }
