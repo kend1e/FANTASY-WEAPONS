@@ -1,25 +1,20 @@
 package net.kenddie.fantasyweapons.config;
 
-import net.kenddie.fantasyweapons.shared.ModConstants;
+import net.kenddie.fantasyweapons.shared.content.WeaponCatalog;
 import net.minecraftforge.common.ForgeConfigSpec;
-import net.minecraftforge.fml.ModLoadingContext;
-import net.minecraftforge.fml.config.ModConfig;
-import net.minecraftforge.fml.event.config.ModConfigEvent;
-import net.minecraftforge.eventbus.api.IEventBus;
 
-import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.stream.Collectors;
 
 public final class FWConfig {
-    private static volatile Map<String, WeaponSettings> active = Map.of();
+    public static final ForgeConfigSpec SPEC;
+    private static final Map<String, Entry> ENTRIES;
 
-    public static void register(IEventBus bus, Collection<String> weapons) {
+    static {
         var builder = new ForgeConfigSpec.Builder();
         var entries = new TreeMap<String, Entry>();
         builder.push("weapons");
-        weapons.stream().sorted().forEach(id -> {
+        WeaponCatalog.INSTANCE.weaponIds().stream().sorted().forEach(id -> {
             builder.push(id);
             var damage = builder.comment("Attack damage modifier; added to the entity's base damage.")
                     .worldRestart().defineInRange("damage", WeaponSettings.DEFAULT.damage(),
@@ -31,21 +26,13 @@ public final class FWConfig {
             builder.pop();
         });
         builder.pop();
-        var spec = builder.build();
-        bus.addListener((ModConfigEvent.Loading event) -> {
-            if (event.getConfig().getSpec() == spec) {
-                active = entries.entrySet().stream().collect(Collectors.toUnmodifiableMap(
-                        Map.Entry::getKey, entry -> entry.getValue().read()));
-            }
-        });
-        bus.addListener((ModConfigEvent.Unloading event) -> {
-            if (event.getConfig().getSpec() == spec) active = Map.of();
-        });
-        ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, spec, ModConstants.MOD_ID + "-server.toml");
+        SPEC = builder.build();
+        ENTRIES = Map.copyOf(entries);
     }
 
     public static WeaponSettings weapon(String id) {
-        return active.getOrDefault(id, WeaponSettings.DEFAULT);
+        var entry = ENTRIES.get(id);
+        return entry != null && SPEC.isLoaded() ? entry.read() : WeaponSettings.DEFAULT;
     }
 
     private record Entry(ForgeConfigSpec.DoubleValue damage, ForgeConfigSpec.DoubleValue speed) {

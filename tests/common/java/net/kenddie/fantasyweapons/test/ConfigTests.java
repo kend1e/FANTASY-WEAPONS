@@ -13,7 +13,7 @@ final class ConfigTests {
     }
     static void run(GameTestHelper h) {
         for (var id : WeaponCatalog.INSTANCE.weaponIds())
-            h.assertTrue(FWConfig.weapon(id).equals(expected(id)), "Config did not load for " + id);
+            AttributeAccess.check(h, FWConfig.weapon(id).equals(expected(id)), "Config did not load for " + id);
         h.succeed();
     }
 }

@@ -12,6 +12,7 @@ public class FantasyWeaponsClient implements ClientModInitializer {
             var pairs = WeaponModels.pairs();
             context.addModels(pairs.values());
             context.modifyModelAfterBake().register((small, bake) -> {
+                if (small == null) return null;
                 var largeId = pairs.get(bake.id());
                 if (largeId == null) return small;
                 var large = bake.baker().bake(largeId, bake.settings());

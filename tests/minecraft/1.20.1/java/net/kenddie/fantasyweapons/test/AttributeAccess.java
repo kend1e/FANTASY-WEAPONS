@@ -17,12 +17,13 @@ final class AttributeAccess {
         var modifiers = stack.getAttributeModifiers(EquipmentSlot.MAINHAND);
         for (var attribute : java.util.List.of(Attributes.ATTACK_DAMAGE, Attributes.ATTACK_SPEED)) {
             var entries = modifiers.get(attribute);
-            h.assertTrue(entries.size() == 1, id + " must have one modifier per attribute");
+            AttributeAccess.check(h, entries.size() == 1, id + " must have one modifier per attribute");
             var modifier = entries.iterator().next();
-            h.assertTrue(modifier.getOperation() == AttributeModifier.Operation.ADDITION, id + " operation");
+            AttributeAccess.check(h, modifier.getOperation() == AttributeModifier.Operation.ADDITION, id + " operation");
             TestSupport.near(modifier.getAmount(), attribute == Attributes.ATTACK_DAMAGE ? settings.damage() : settings.speed(), id + " modifier");
         }
-        h.assertTrue(stack.getAttributeModifiers(EquipmentSlot.OFFHAND).isEmpty(), id + " offhand modifiers");
+        AttributeAccess.check(h, stack.getAttributeModifiers(EquipmentSlot.OFFHAND).isEmpty(), id + " offhand modifiers");
     }
+    static void check(GameTestHelper h, boolean condition, String message) { h.assertTrue(condition, message); }
     private AttributeAccess() {}
 }

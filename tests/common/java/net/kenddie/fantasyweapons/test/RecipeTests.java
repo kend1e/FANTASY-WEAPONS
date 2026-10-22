@@ -18,11 +18,18 @@ final class RecipeTests {
                     new ItemStack(TestSupport.item(data.get("template").getAsString())), base,
                     new ItemStack(TestSupport.item(TestSupport.EXPECTED.get("addition").getAsString()))));
             var result = RecipeAccess.upgrade(h, inputs).orElseThrow();
-            h.assertTrue(result.is(TestSupport.item(id)) && result.getCount() == 1, "Wrong result for " + id);
-            h.assertTrue(result.getDamageValue() == 7 && StackAccess.marked(result), id + " lost base data");
+            AttributeAccess.check(h, result.is(TestSupport.item(id)) && result.getCount() == 1, "Wrong result for " + id);
+            if (TestSupport.EXPECTED.get("preservesUpgradeData").getAsBoolean()) {
+                AttributeAccess.check(h, result.getDamageValue() == 7 && StackAccess.marked(result), id + " lost base data");
+            } else {
+                AttributeAccess.check(h, result.getDamageValue() == 0 && !StackAccess.marked(result), id + " unexpected crafting data");
+                java.util.Collections.reverse(inputs);
+                AttributeAccess.check(h, RecipeAccess.upgrade(h, inputs).orElseThrow().is(TestSupport.item(id)), id + " crafting order");
+                java.util.Collections.reverse(inputs);
+            }
             for (int slot = 0; slot < 3; slot++) {
                 var original = inputs.set(slot, new ItemStack(Items.DIRT));
-                h.assertTrue(RecipeAccess.upgrade(h, inputs).isEmpty(), id + " accepted invalid slot " + slot);
+                AttributeAccess.check(h, RecipeAccess.upgrade(h, inputs).isEmpty(), id + " accepted invalid slot " + slot);
                 inputs.set(slot, original);
             }
         }
@@ -37,9 +44,9 @@ final class RecipeTests {
                     inputs.set(y * 3 + x, new ItemStack(TestSupport.item(definition.getAsJsonObject("ingredients").get(String.valueOf(row.charAt(x))).getAsString())));
             }
             var result = RecipeAccess.craft(h, inputs).orElseThrow();
-            h.assertTrue(result.is(TestSupport.item(data.get("id").getAsString())) && result.getCount() == definition.get("count").getAsInt(), "Wrong material result");
+            AttributeAccess.check(h, result.is(TestSupport.item(data.get("id").getAsString())) && result.getCount() == definition.get("count").getAsInt(), "Wrong material result");
             inputs.set(0, new ItemStack(Items.DIRT));
-            h.assertTrue(RecipeAccess.craft(h, inputs).isEmpty(), "Material accepts invalid ingredient");
+            AttributeAccess.check(h, RecipeAccess.craft(h, inputs).isEmpty(), "Material accepts invalid ingredient");
         }
         h.succeed();
     }

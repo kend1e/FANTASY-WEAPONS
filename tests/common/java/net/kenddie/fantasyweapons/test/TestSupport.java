@@ -13,11 +13,11 @@ final class TestSupport {
     static Item item(String id) {
         var key = GameVersion.id(id.contains(":") ? id : "fantasy_weapons:" + id);
         if (!BuiltInRegistries.ITEM.containsKey(key)) throw new IllegalStateException("Missing item: " + key);
-        return BuiltInRegistries.ITEM.get(key);
+        return net.kenddie.fantasyweapons.item.FWItems.get(id);
     }
     static void near(double actual, double expected, String message) {
         if (!Double.isFinite(actual) || Math.abs(actual - expected) > 0.00001)
-            throw new net.minecraft.gametest.framework.GameTestAssertException(message + ": expected " + expected + ", got " + actual);
+            throw new IllegalStateException(message + ": expected " + expected + ", got " + actual);
     }
     private static JsonObject load() {
         var stream = TestSupport.class.getResourceAsStream("/weapon_test_expectations.json");

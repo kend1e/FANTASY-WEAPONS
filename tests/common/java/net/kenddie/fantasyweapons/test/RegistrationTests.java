@@ -9,10 +9,10 @@ final class RegistrationTests {
     static void run(GameTestHelper h) {
         var catalog = WeaponCatalog.INSTANCE;
         for (var id : catalog.itemIds()) TestSupport.item(id);
-        for (var id : catalog.weaponIds()) h.assertTrue(TestSupport.item(id) instanceof FWWeaponBasicSwordItem, id + " is not a weapon");
+        for (var id : catalog.weaponIds()) AttributeAccess.check(h, TestSupport.item(id) instanceof FWWeaponBasicSwordItem, id + " is not a weapon");
         var actual = BuiltInRegistries.ITEM.keySet().stream().filter(key -> key.getNamespace().equals("fantasy_weapons"))
                 .map(key -> key.getPath()).collect(java.util.stream.Collectors.toSet());
-        h.assertTrue(actual.equals(new java.util.HashSet<>(catalog.itemIds())), "Registered items differ from catalog");
+        AttributeAccess.check(h, actual.equals(new java.util.HashSet<>(catalog.itemIds())), "Registered items differ from catalog");
         h.succeed();
     }
 }

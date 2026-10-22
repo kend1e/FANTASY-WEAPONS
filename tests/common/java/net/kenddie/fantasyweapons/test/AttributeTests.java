@@ -27,7 +27,7 @@ final class AttributeTests {
                     player.setItemSlot(EquipmentSlot.MAINHAND, stack.copy());
                     player.tick();
                     player.tick();
-                    h.assertTrue(player.isAlive(), "Attribute fixture died while testing " + id);
+                    AttributeAccess.check(h, player.isAlive(), "Attribute fixture died while testing " + id);
                     TestSupport.near(player.getAttributeValue(Attributes.ATTACK_DAMAGE), baseDamage + settings.damage(), id + " equipped damage");
                     TestSupport.near(player.getAttributeValue(Attributes.ATTACK_SPEED), baseSpeed + settings.speed(), id + " equipped speed");
                 }
