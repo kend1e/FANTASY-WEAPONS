@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 public final class FWConfig {
     private static volatile Map<String, WeaponSettings> active = Map.of();
 
-    public static void register(IEventBus bus, ModContainer container, Collection<String> weapons) {
+    public static void register(IEventBus bus, ModContainer container, ModConfig.Type type, Collection<String> weapons) {
         var builder = new ModConfigSpec.Builder();
         var entries = new TreeMap<String, Entry>();
         builder.push("weapons");
@@ -41,7 +41,7 @@ public final class FWConfig {
         bus.addListener((ModConfigEvent.Unloading event) -> {
             if (event.getConfig().getSpec() == spec) active = Map.of();
         });
-        container.registerConfig(ModConfig.Type.SERVER, spec, ModConstants.MOD_ID + "-server.toml");
+        container.registerConfig(type, spec, ModConstants.MOD_ID + "-server.toml");
     }
 
     public static WeaponSettings weapon(String id) {

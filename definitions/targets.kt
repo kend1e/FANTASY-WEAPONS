@@ -27,4 +27,22 @@ val targets = buildTargets(releaseVersion = "1.0") {
         fabricApi()
         clothConfig()
     }
+    forge("26.1.2")
+    neoforge("26.1.2")
+    fabric("26.1.2") {
+        fabricApi()
+        clothConfig()
+    }
+    forge("26.2")
+    neoforge("26.2")
+    fabric("26.2") {
+        fabricApi()
+        clothConfig()
+    }
+    forge("26.3")
+    neoforge("26.3")
+    fabric("26.3") {
+        fabricApi()
+        clothConfig()
+    }
 }
